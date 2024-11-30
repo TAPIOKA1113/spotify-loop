@@ -6,8 +6,6 @@ import { useState, useEffect } from 'react'
 
 import { ACCESS_TOKEN } from '../env'
 
-
-
 function App() {
 
   const token = ACCESS_TOKEN;
