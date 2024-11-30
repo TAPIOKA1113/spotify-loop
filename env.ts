@@ -1,0 +1,6 @@
+export const USERNAME = 'gnti7y5zkih9elje0lzd4b84g';
+export const CLIENT_ID = '7ca33bfaf9ce41fbbc43a2abeec4e53d';
+export const CLIENT_SECRET = '79b0572f34084761b508cbca34bd3512';
+export const REFRESH_TOKEN = 'AQDbn04HT4tNMovNt2r3j_xiNOz2qJPXrsIszfJEH7MfEQCR2ZBGsk9vrBeYosvqfy92UM2ciFLONzwd3K8J63wklBh9NBGfIypgOg-wgRpjGiYuPYD6gc933gNR_TpnhNU';
+
+export const ACCESS_TOKEN =  "BQAKth2FrLn7KpeAPbOvN6WuqUHfPPkw7nDxTKYWzVHzhG5ZAyInE886mufeupP_lqAAEGeawa-Bv4KV8q6Pcl4MGhp87JRpHPdo_nkTv3Vnba3Z08KQsAn2ueifrqWdjoGWeO2qHDUCIrEaQaNEH_-xbne5oWTcVTWV4SISkZrUFqKuujinufZ3iEVxGxSL9PuYQavzuywAWfBNHHHdbGXoJuw9hexUnyNZuya1PRUEvg7rhp1ALUjSZ-JK"
