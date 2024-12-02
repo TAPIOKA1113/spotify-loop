@@ -1,15 +1,16 @@
-import '../App.css'
 import SpotifyPlayer from 'react-spotify-web-playback';
 import { spotifyApi } from 'react-spotify-web-playback';
 // import Login from './components/Login';
 import { useState, useEffect } from 'react'
 import { Button, ToggleSwitch } from "flowbite-react";
 
-import { ACCESS_TOKEN } from '../../env'
+interface PlayerProps {
+    access_token: string;
+}
 
-function Player() {
+const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
-    const token = ACCESS_TOKEN;
+    const token = access_token;
 
     const [spotifyUrl, setSpotifyUrl] = useState<string>('spotify:track:2s0xdai1hn2yRLAliZMLRV');
 
