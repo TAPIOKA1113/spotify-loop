@@ -31,6 +31,30 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
         return `${minutes}:${formattedSeconds}`;
     }
 
+    // キーボードイベントのハンドラーを追加
+    useEffect(() => {
+        const handleKeyPress = async (event: KeyboardEvent) => {
+            if (event.code === 'Space' && !event.repeat) {
+                event.preventDefault(); // デフォルトのスクロール動作を防止
+                const state = await spotifyApi.getPlaybackState(token);
+                if (state?.is_playing) {
+                    await spotifyApi.pause(token);
+                } else {
+                    const devices = await spotifyApi.getDevices(token);
+                    await spotifyApi.play(token, { deviceId: devices.devices[0].id ?? '' });
+                }
+            }
+            else if (event.code === 'ArrowLeft' && !event.repeat) {
+                await spotifyApi.seek(token, loopEndA ?? 0);
+            }
+        }
+
+        document.addEventListener('keydown', handleKeyPress);
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [token, loopEndA]);
+
     useEffect(() => {
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token);
