@@ -1,157 +1,160 @@
-import SpotifyPlayer from 'react-spotify-web-playback';
-import { spotifyApi } from 'react-spotify-web-playback';
-// import Login from './components/Login';
 import { useState, useEffect } from 'react'
-import { Button, ToggleSwitch } from "flowbite-react";
+import SpotifyPlayer from 'react-spotify-web-playback'
+import { spotifyApi } from 'react-spotify-web-playback'
+import {
+    Button,
+    Switch,
+    VStack,
+    HStack,
+    Input,
+    Box,
+    // Container,
+    Text,
+} from '@yamada-ui/react'
+import { PlaylistCreator } from '../components/PlaylistCreator'
 
 interface PlayerProps {
-    access_token: string;
+    access_token: string
 }
 
 const Player: React.FC<PlayerProps> = ({ access_token }) => {
+    const token = access_token
+    const [spotifyUrl, setSpotifyUrl] = useState<string>('spotify:track:2s0xdai1hn2yRLAliZMLRV')
+    const [loopEndA, setLoopEndA] = useState<number | null>(null)
+    const [loopEndB, setLoopEndB] = useState<number | null>(null)
+    const [inputStartTime, setInputStartTime] = useState<string>('')
+    const [inputEndTime, setInputEndTime] = useState<string>('')
+    const [toggleSwitch, setToggleSwitch] = useState(false)
 
-    const token = access_token;
-
-    const [spotifyUrl, setSpotifyUrl] = useState<string>('spotify:track:2s0xdai1hn2yRLAliZMLRV');
-
-    const [loopEndA, setLoopEndA] = useState<number | null>(null); // Aループの終了位置を保存するための状態
-    const [loopEndB, setLoopEndB] = useState<number | null>(null); // Bループの終了位置を保存するための状態
-
-    const [inputStartTime, setInputStartTime] = useState<string>(''); // 開始位置の入力
-    const [inputEndTime, setInputEndTime] = useState<string>(''); // 終了位置の入力
-
-    const [toggleSwitch, setToggleSwitch] = useState(false);
-
+    // Previous functions remain the same
     const formatTime = (ms: number) => {
-        const totalSeconds = ms / 1000; // ミリ秒を秒に変換
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = (totalSeconds % 60).toFixed(3); // 小数点以下3桁まで表示
-        const formattedSeconds = parseFloat(seconds) < 10 ? `0${seconds}` : seconds;
+        const totalSeconds = ms / 1000
+        const minutes = Math.floor(totalSeconds / 60)
+        const seconds = (totalSeconds % 60).toFixed(3)
+        const formattedSeconds = parseFloat(seconds) < 10 ? `0${seconds}` : seconds
 
-        return `${minutes}:${formattedSeconds}`;
+        return `${minutes}:${formattedSeconds}`
     }
 
-    // キーボードイベントのハンドラーを追加
     useEffect(() => {
         const handleKeyPress = async (event: KeyboardEvent) => {
             if (event.code === 'Space' && !event.repeat) {
-                event.preventDefault(); // デフォルトのスクロール動作を防止
-                const state = await spotifyApi.getPlaybackState(token);
+                event.preventDefault()
+                const state = await spotifyApi.getPlaybackState(token)
                 if (state?.is_playing) {
-                    await spotifyApi.pause(token);
+                    await spotifyApi.pause(token)
                 } else {
-                    const devices = await spotifyApi.getDevices(token);
-                    await spotifyApi.play(token, { deviceId: devices.devices[0].id ?? '' });
+                    const devices = await spotifyApi.getDevices(token)
+                    await spotifyApi.play(token, { deviceId: devices.devices[0].id ?? '' })
                 }
-            }
-            else if (event.code === 'ArrowLeft' && !event.repeat) {
-                await spotifyApi.seek(token, loopEndA ?? 0);
+            } else if (event.code === 'ArrowLeft' && !event.repeat) {
+                await spotifyApi.seek(token, loopEndA ?? 0)
             }
         }
 
-        document.addEventListener('keydown', handleKeyPress);
+        document.addEventListener('keydown', handleKeyPress)
         return () => {
-            document.removeEventListener('keydown', handleKeyPress);
-        };
-    }, [token, loopEndA]);
+            document.removeEventListener('keydown', handleKeyPress)
+        }
+    }, [token, loopEndA])
 
     useEffect(() => {
         const interval = setInterval(async () => {
-            const state = await spotifyApi.getPlaybackState(token);
-            const ms: number = state?.progress_ms ?? 0;  //現在の秒数
+            const state = await spotifyApi.getPlaybackState(token)
+            const ms: number = state?.progress_ms ?? 0
 
             if (toggleSwitch && loopEndB !== null && ms > loopEndB) {
-                spotifyApi.seek(token, loopEndA ?? 0); // Aに戻る
-                console.log(`Bループを超えたため、Aに戻ります: ${loopEndA}ms`);
+                spotifyApi.seek(token, loopEndA ?? 0)
+                console.log(`Bループを超えたため、Aに戻ります: ${loopEndA}ms`)
             }
-        }, 500); // 1秒ごとに実行
+        }, 500)
 
-        return () => clearInterval(interval);
-    }, [loopEndA, loopEndB, token, toggleSwitch]);
+        return () => clearInterval(interval)
+    }, [loopEndA, loopEndB, token, toggleSwitch])
 
     const setLoopEndPositionA = async () => {
-        const state = await spotifyApi.getPlaybackState(token);
-        const ms: number = state?.progress_ms ?? 0;
-        setLoopEndA(ms); // 現在の再生位置をAループの終了位置として保存
-        setInputStartTime(formatTime(ms)); // 秒数に変換して表示
-        console.log(`Aループの終了位置を設定しました: ${ms}ms`);
+        const state = await spotifyApi.getPlaybackState(token)
+        const ms: number = state?.progress_ms ?? 0
+        setLoopEndA(ms)
+        setInputStartTime(formatTime(ms))
+        console.log(`Aループの終了位置を設定しました: ${ms}ms`)
     }
 
     const setLoopEndPositionB = async () => {
-        const state = await spotifyApi.getPlaybackState(token);
-        const ms: number = state?.progress_ms ?? 0;
-        setLoopEndB(ms); // 現在の再生位置をBループの終了位置として保存
-        setInputEndTime(formatTime(ms)); // 秒数に変換して表示
-        console.log(`Bループの終了位置を設定しました: ${ms}ms`);
+        const state = await spotifyApi.getPlaybackState(token)
+        const ms: number = state?.progress_ms ?? 0
+        setLoopEndB(ms)
+        setInputEndTime(formatTime(ms))
+        console.log(`Bループの終了位置を設定しました: ${ms}ms`)
     }
 
     const setCustomLoopEndA = () => {
-        const timeInSeconds = parseFloat(inputStartTime);
-        console.log(timeInSeconds)
+        const timeInSeconds = parseFloat(inputStartTime)
         if (!isNaN(timeInSeconds)) {
-            setLoopEndA(timeInSeconds * 1000); // ミリ秒に変換
+            setLoopEndA(timeInSeconds * 1000)
         }
     }
 
     const setCustomLoopEndB = () => {
-        const timeInSeconds = parseFloat(inputEndTime);
-        console.log(timeInSeconds)
+        const timeInSeconds = parseFloat(inputEndTime)
         if (!isNaN(timeInSeconds)) {
-            setLoopEndB(timeInSeconds * 1000); // ミリ秒に変換
+            setLoopEndB(timeInSeconds * 1000)
         }
     }
 
-    const handleToggle = async () => {
-        setToggleSwitch(!toggleSwitch);
-    }
-
     return (
-        <>
-            <div className='flex mb-4 items-center'>
-                <div className='mr-4'>SpotifyのトラックURL</div>
-                <input
-                    className='ml-2'
-                    type="text"
-                    value={spotifyUrl}
-                    onChange={(e) => setSpotifyUrl(e.target.value)}
-                    onBlur={() => setSpotifyUrl(spotifyUrl)} // フォーカスが外れたときに更新
-                />
-            </div>
-            <SpotifyPlayer
-                token={token}
-                uris={spotifyUrl ?? ''}
-            />
-            <div className='mb-10'></div>
-            <div className='flex flex-col items-center'>
-                <div className='flex mb-4 items-center'>
-                    <div className='mr-4'>開始位置</div>
-                    <Button onClick={setLoopEndPositionA}>Now</Button>
-                    <input
-                        className='ml-2'
-                        type="text"
-                        value={inputStartTime}
-                        onChange={(e) => setInputStartTime(e.target.value)}
-                        onBlur={setCustomLoopEndA} // フォーカスが外れたときに更新
-                        placeholder="秒数を入力"
-                    />
-                </div>
-                <div className='flex mb-4 items-center'>
-                    <div className='mr-4'>終了位置</div>
-                    <Button onClick={setLoopEndPositionB}>Now</Button>
-                    <input
-                        className='ml-2'
-                        type="text"
-                        value={inputEndTime}
-                        onChange={(e) => setInputEndTime(e.target.value)}
-                        onBlur={setCustomLoopEndB} // フォーカスが外れたときに更新
-                        placeholder="秒数を入力"
-                    />
-                </div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className="w-full max-w-3xl p-4 bg-white rounded-lg shadow-lg">
+                <PlaylistCreator onTrackSelect={setSpotifyUrl} />
 
-                <ToggleSwitch checked={toggleSwitch} label="指定範囲をループ" onChange={handleToggle} />
+                <Box mb={4}>
+                    <HStack mb={4}>
+                        <Text>現在再生中のトラック</Text>
+                        <Input
+                            flex={1}
+                            value={spotifyUrl}
+                            onChange={(e) => setSpotifyUrl(e.target.value)}
+                            onBlur={() => setSpotifyUrl(spotifyUrl)}
+                        />
+                    </HStack>
+                    <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} />
+                </Box>
+
+                <VStack align="stretch">
+                    <HStack >
+                        <Text w="24">開始位置</Text>
+                        <Button onClick={setLoopEndPositionA}>Now</Button>
+                        <Input
+                            value={inputStartTime}
+                            onChange={(e) => setInputStartTime(e.target.value)}
+                            onBlur={setCustomLoopEndA}
+                            placeholder="秒数を入力"
+                        />
+                    </HStack>
+
+                    <HStack >
+                        <Text w="24">終了位置</Text>
+                        <Button onClick={setLoopEndPositionB}>Now</Button>
+                        <Input
+                            value={inputEndTime}
+                            onChange={(e) => setInputEndTime(e.target.value)}
+                            onBlur={setCustomLoopEndB}
+                            placeholder="秒数を入力"
+                        />
+                    </HStack>
+
+                    <HStack>
+                        <Switch
+                            checked={toggleSwitch}
+                            onChange={() => setToggleSwitch(!toggleSwitch)}
+                        />
+                        <Text>指定範囲をループ</Text>
+                    </HStack>
+                </VStack>
             </div>
-        </>
+        </div>
     )
 }
 
 export default Player
+

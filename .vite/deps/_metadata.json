@@ -1,0 +1,64 @@
+{
+  "hash": "ce7d50b3",
+  "configHash": "dddf80e3",
+  "lockfileHash": "ef79c750",
+  "browserHash": "b1a7d6a6",
+  "optimized": {
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "6b0d587d",
+      "needsInterop": true
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "feb371cf",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "29508073",
+      "needsInterop": true
+    },
+    "react-router-dom": {
+      "src": "../../node_modules/react-router-dom/dist/index.mjs",
+      "file": "react-router-dom.js",
+      "fileHash": "fab609bd",
+      "needsInterop": false
+    },
+    "react-spotify-web-playback": {
+      "src": "../../node_modules/react-spotify-web-playback/dist/index.mjs",
+      "file": "react-spotify-web-playback.js",
+      "fileHash": "66eea213",
+      "needsInterop": false
+    },
+    "flowbite-react": {
+      "src": "../../node_modules/flowbite-react/dist/esm/index.mjs",
+      "file": "flowbite-react.js",
+      "fileHash": "018cdaef",
+      "needsInterop": false
+    },
+    "spotify-audio-element": {
+      "src": "../../node_modules/spotify-audio-element/spotify-audio-element.js",
+      "file": "spotify-audio-element.js",
+      "fileHash": "83cd9216",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-VJ3XFNUD": {
+      "file": "chunk-VJ3XFNUD.js"
+    },
+    "chunk-KIB7QIAR": {
+      "file": "chunk-KIB7QIAR.js"
+    },
+    "chunk-E4IJLYFW": {
+      "file": "chunk-E4IJLYFW.js"
+    },
+    "chunk-45IN2YCG": {
+      "file": "chunk-45IN2YCG.js"
+    }
+  }
+}
