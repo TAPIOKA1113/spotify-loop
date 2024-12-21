@@ -1,14 +1,14 @@
-"use client"
-
 import { useState } from 'react'
 import { Button } from '@yamada-ui/react'
 import { PlaylistModal } from './Modal/PlaylistModal'
 
+
 interface PlaylistCreatorProps {
     onTrackSelect: (trackUrl: string) => void;
+    token: string;
 }
 
-export function PlaylistCreator({ onTrackSelect }: PlaylistCreatorProps) {
+export function PlaylistCreator({ token }: PlaylistCreatorProps) {
     const [isModalOpen, setIsModalOpen] = useState(false)
 
     return (
@@ -25,7 +25,12 @@ export function PlaylistCreator({ onTrackSelect }: PlaylistCreatorProps) {
                 <PlaylistModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
-                    onTrackSelect={onTrackSelect}
+                    token={token}
+                    onSavePlaylist={(tracks) => {
+                        // プレイリストが保存された時の処理をここに書く
+                        setIsModalOpen(false);
+                        console.log(tracks)
+                    }}
                 />
             </div>
         </>

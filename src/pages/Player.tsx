@@ -3,18 +3,30 @@ import SpotifyPlayer from 'react-spotify-web-playback'
 import { spotifyApi } from 'react-spotify-web-playback'
 import {
     Button,
-    Switch,
     VStack,
-    HStack,
-    Input,
     Box,
-    // Container,
-    Text,
 } from '@yamada-ui/react'
-import { PlaylistCreator } from '../components/PlaylistCreator'
+import { PlaylistView } from '../components/PlaylistView'
+import { PlaylistModal } from '../components/Modal/PlaylistModal'
 
 interface PlayerProps {
     access_token: string
+}
+
+interface Track {
+    id: string;
+    artist: string;
+    name: string;
+    cover: string;
+    defaultEndTime: number;
+    startTime?: number;
+    endTime?: number;
+}
+
+interface Playlist {
+    id: string;
+    name: string;
+    tracks: Track[];
 }
 
 const Player: React.FC<PlayerProps> = ({ access_token }) => {
@@ -25,6 +37,9 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [inputStartTime, setInputStartTime] = useState<string>('')
     const [inputEndTime, setInputEndTime] = useState<string>('')
     const [toggleSwitch, setToggleSwitch] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [playlists, setPlaylists] = useState<Playlist[]>([])
+    const [currentTrack, setCurrentTrack] = useState<string>('')
 
     // Previous functions remain the same
     const formatTime = (ms: number) => {
@@ -102,55 +117,82 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
         }
     }
 
+    const handleSavePlaylist = (newPlaylist: Playlist) => {
+        setPlaylists([...playlists, newPlaylist])
+    }
+
+    const handleDeletePlaylist = (playlistId: string) => {
+        setPlaylists(playlists.filter(playlist => playlist.id !== playlistId))
+    }
+
+    const handlePlayTrack = (trackId: string, startTime?: number, endTime?: number) => {
+        setSpotifyUrl(`spotify:track:${trackId}`)
+        setCurrentTrack(trackId)
+        if (startTime !== undefined) {
+            setLoopEndA(startTime)
+            setInputStartTime(formatTime(startTime))
+        }
+        if (endTime !== undefined) {
+            setLoopEndB(endTime)
+            setInputEndTime(formatTime(endTime))
+        }
+        setToggleSwitch(startTime !== undefined && endTime !== undefined)
+    }
+
+    const handleUpdateTrackTimes = (playlistId: string, trackId: string, startTime?: number, endTime?: number) => {
+        setPlaylists(playlists.map(playlist => {
+            if (playlist.id === playlistId) {
+                return {
+                    ...playlist,
+                    tracks: playlist.tracks.map(track => {
+                        if (track.id === trackId) {
+                            return { ...track, startTime, endTime }
+                        }
+                        return track
+                    })
+                }
+            }
+            return playlist
+        }))
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="w-full max-w-3xl p-4 bg-white rounded-lg shadow-lg">
-                <PlaylistCreator onTrackSelect={setSpotifyUrl} />
-
-                <Box mb={4}>
-                    <HStack mb={4}>
-                        <Text>現在再生中のトラック</Text>
-                        <Input
-                            flex={1}
-                            value={spotifyUrl}
-                            onChange={(e) => setSpotifyUrl(e.target.value)}
-                            onBlur={() => setSpotifyUrl(spotifyUrl)}
-                        />
-                    </HStack>
-                    <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} />
-                </Box>
-
+            <div className="w-full max-w-4xl p-4 bg-white rounded-lg shadow-lg">
                 <VStack align="stretch">
-                    <HStack >
-                        <Text w="24">開始位置</Text>
-                        <Button onClick={setLoopEndPositionA}>Now</Button>
-                        <Input
-                            value={inputStartTime}
-                            onChange={(e) => setInputStartTime(e.target.value)}
-                            onBlur={setCustomLoopEndA}
-                            placeholder="秒数を入力"
-                        />
-                    </HStack>
+                    <Box className="flex justify-center">
+                        <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
+                            プレイリストを作成
+                        </Button>
+                    </Box>
 
-                    <HStack >
-                        <Text w="24">終了位置</Text>
-                        <Button onClick={setLoopEndPositionB}>Now</Button>
-                        <Input
-                            value={inputEndTime}
-                            onChange={(e) => setInputEndTime(e.target.value)}
-                            onBlur={setCustomLoopEndB}
-                            placeholder="秒数を入力"
-                        />
-                    </HStack>
+                    <PlaylistView
+                        playlists={playlists}
+                        onPlayTrack={handlePlayTrack}
+                        onDeletePlaylist={handleDeletePlaylist}
+                        onUpdateTrackTimes={handleUpdateTrackTimes}
+                        currentTrack={currentTrack}
+                        onSetLoopA={setLoopEndPositionA}
+                        onSetLoopB={setLoopEndPositionB}
+                        inputStartTime={inputStartTime}
+                        inputEndTime={inputEndTime}
+                        onStartTimeChange={(value) => setInputStartTime(value)}
+                        onEndTimeChange={(value) => setInputEndTime(value)}
+                        onStartTimeBlur={setCustomLoopEndA}
+                        onEndTimeBlur={setCustomLoopEndB}
+                    />
 
-                    <HStack>
-                        <Switch
-                            checked={toggleSwitch}
-                            onChange={() => setToggleSwitch(!toggleSwitch)}
-                        />
-                        <Text>指定範囲をループ</Text>
-                    </HStack>
+                    <Box>
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} />
+                    </Box>
                 </VStack>
+
+                <PlaylistModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    token={token}
+                    onSavePlaylist={handleSavePlaylist}
+                />
             </div>
         </div>
     )

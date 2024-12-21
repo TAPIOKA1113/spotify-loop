@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import {
     Modal,
@@ -13,29 +12,50 @@ import {
     IconButton,
     Text,
     Box,
+    Image
 } from '@yamada-ui/react'
-import { Plus, DeleteIcon } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
+import { spotifyApi } from 'react-spotify-web-playback'
 
 interface Track {
     id: string;
+    artist: string;
     name: string;
+    cover: string;
+    defaultEndTime: number;
+}
+
+interface Playlist {
+    id: string;
+    name: string;
+    tracks: Track[];
 }
 
 interface PlaylistModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onTrackSelect: (trackUrl: string) => void;
+    token: string;
+    onSavePlaylist: (playlist: Playlist) => void;
 }
 
-export function PlaylistModal({ isOpen, onClose, onTrackSelect }: PlaylistModalProps) {
+export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: PlaylistModalProps) {
     const [tracks, setTracks] = useState<Track[]>([])
     const [newTrackId, setNewTrackId] = useState('')
     const [playlistName, setPlaylistName] = useState('')
 
-    const addTrack = () => {
-        if (newTrackId) {
+    const searchTrackName = async (trackId: string) => {
+        const Track = await spotifyApi.getTrack(token, trackId)
+        return Track
+    }
+
+    const addTrack = async () => {
+        const Track = await searchTrackName(newTrackId)
+        console.log(Track)
+        if (Track) {
+            const TrackName = Track.name
+            const TrackArtist = Track.artists[0].name
             const trackId = newTrackId.split(':').pop() || newTrackId
-            setTracks([...tracks, { id: trackId, name: `Track ${tracks.length + 1}` }])
+            setTracks([...tracks, { id: trackId, name: TrackName, artist: TrackArtist, cover: Track.album.images[0].url, defaultEndTime: Track.duration_ms }])
             setNewTrackId('')
         }
     }
@@ -45,19 +65,26 @@ export function PlaylistModal({ isOpen, onClose, onTrackSelect }: PlaylistModalP
     }
 
     const savePlaylist = () => {
-        // TODO: Implement playlist saving functionality
-        console.log('Saving playlist:', playlistName, tracks)
-        onClose()
+        if (playlistName && tracks.length > 0) {
+            const newPlaylist: Playlist = {
+                id: Date.now().toString(), // Simple unique ID generation
+                name: playlistName,
+                tracks: tracks
+            }
+            onSavePlaylist(newPlaylist)
+            setPlaylistName('')
+            setTracks([])
+            onClose()
+        }
     }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay />
-
             <ModalHeader>プレイリストを作成</ModalHeader>
             <ModalCloseButton />
             <ModalBody py={6}>
-                <VStack align="stretch">
+                <VStack align="stretch" >
                     <Input
                         value={playlistName}
                         onChange={(e) => setPlaylistName(e.target.value)}
@@ -78,7 +105,7 @@ export function PlaylistModal({ isOpen, onClose, onTrackSelect }: PlaylistModalP
                         />
                     </HStack>
 
-                    <VStack align="stretch">
+                    <VStack align="stretch" >
                         {tracks.map((track, index) => (
                             <Box
                                 key={index}
@@ -89,20 +116,13 @@ export function PlaylistModal({ isOpen, onClose, onTrackSelect }: PlaylistModalP
                                 alignItems="center"
                                 justifyContent="space-between"
                             >
-                                <Text
-                                    flex={1}
-                                    cursor="pointer"
-                                    _hover={{ color: 'blue.500' }}
-                                    onClick={() => {
-                                        onTrackSelect(`spotify:track:${track.id}`)
-                                        onClose()
-                                    }}
-                                >
-                                    {track.name}
+                                <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
+                                <Text flex={1} ml={3}>
+                                    {track.name} - {track.artist}
                                 </Text>
                                 <IconButton
                                     aria-label="Remove track"
-                                    icon={<DeleteIcon />}
+                                    icon={<Trash2 />}
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => removeTrack(index)}
@@ -118,7 +138,6 @@ export function PlaylistModal({ isOpen, onClose, onTrackSelect }: PlaylistModalP
                     )}
                 </VStack>
             </ModalBody>
-
         </Modal>
     )
 }
