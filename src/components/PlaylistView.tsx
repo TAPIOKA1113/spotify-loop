@@ -166,26 +166,33 @@ export function PlaylistView({
     }
 
     const handleEditButton = (trackId: string) => {
-        setCurrentTrack(currentTrack === trackId ? '' : trackId)
+        if (currentTrack === trackId) {
+            setToggleSwitch(true)
+            setCurrentTrack('')
+        } else {
+            setToggleSwitch(false)
+            setCurrentTrack(trackId)
+        }
     }
-
     const handlePlayButton = async (uri: string, trackId: string) => {
         setCurrentlyPlayingTrack(currentlyPlayingTrack === trackId ? '' : trackId);
-        const devices = await spotifyApi.getDevices(token)
-        
+
         if (currentlyPlayingTrack === trackId) {
             await spotifyApi.pause(token);
         } else {
-            await spotifyApi.play(token, { 
-                deviceId: "5ccb304f0655d8412e648ba55225034d1caec96d", 
-                uris: [uri] 
+            const position_ms = trackTimes[trackId]?.startTime ?? 0;
+        
+            await fetch('https://api.spotify.com/v1/me/player/play', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uris: [uri],
+                    position_ms: position_ms
+                })
             });
-            // 曲の再生開始後、開始位置にシーク
-            if (trackTimes[trackId]?.startTime) {
-                setTimeout(async () => {
-                    await spotifyApi.seek(token, trackTimes[trackId].startTime ?? 0);
-                }, 500);
-            }
         }
     };
 
@@ -221,7 +228,7 @@ export function PlaylistView({
                                         </HStack>
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
-                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} - 
+                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -
                                                 {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : '00:00'}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
