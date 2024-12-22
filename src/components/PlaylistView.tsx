@@ -90,7 +90,7 @@ export function PlaylistView({
             const currentTrackId = state?.item?.id
 
             if (currentTrackId && toggleSwitch && trackTimes[currentTrackId]?.endTime !== null && ms > trackTimes[currentTrackId].endTime!) {
-                spotifyApi.seek(token, trackTimes[currentTrackId].startTime ?? 0)
+                await spotifyApi.seek(token, trackTimes[currentTrackId].startTime ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${trackTimes[currentTrackId].startTime}ms`)
             }
         }, 500)
@@ -179,7 +179,33 @@ export function PlaylistView({
             await spotifyApi.pause(token);
         } else {
             const position_ms = trackTimes[trackId]?.startTime ?? 0;
-        
+            const devices = await spotifyApi.getDevices(token);
+            const spotifyLoopDevice = devices.devices.find(device => device.name === 'spotify-loop');
+            const device_id = spotifyLoopDevice?.id;
+            console.log(devices)
+            console.log(device_id)
+
+            if (!device_id) {
+                console.error('spotify-loopデバイスが見つかりません');
+                return;
+            }
+
+            // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
+            if (!spotifyLoopDevice.is_active) {
+                await fetch('https://api.spotify.com/v1/me/player', {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        device_ids: [device_id],
+                        play: false
+                    })
+                });
+            }
+
+            // 再生
             await fetch('https://api.spotify.com/v1/me/player/play', {
                 method: 'PUT',
                 headers: {
@@ -188,9 +214,12 @@ export function PlaylistView({
                 },
                 body: JSON.stringify({
                     uris: [uri],
-                    position_ms: position_ms
+                    position_ms: position_ms,
+                    device_id: device_id
                 })
             });
+
+
         }
     };
 

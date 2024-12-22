@@ -34,7 +34,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [playlists, setPlaylists] = useState<Playlist[]>([])
-    const [spotifyUrl, setSpotifyUrl] = useState<string>('spotify:track:2s0xdai1hn2yRLAliZMLRV')
+    const [spotifyUrl, setSpotifyUrl] = useState<string>('')
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         setPlaylists([...playlists, newPlaylist])
@@ -84,7 +84,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     />
 
                     <Box>
-                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} />
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name='spotify-loop' initialVolume={0.2} />
                     </Box>
                 </VStack>
 
