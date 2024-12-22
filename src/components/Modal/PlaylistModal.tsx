@@ -67,7 +67,7 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
     const savePlaylist = () => {
         if (playlistName && tracks.length > 0) {
             const newPlaylist: Playlist = {
-                id: Date.now().toString(), // Simple unique ID generation
+                id: Date.now().toString(), 
                 name: playlistName,
                 tracks: tracks
             }

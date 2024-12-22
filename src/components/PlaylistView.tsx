@@ -112,6 +112,13 @@ export function PlaylistView({
     const setLoopEndPositionA = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
+        
+        // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
+        if (trackTimes[trackId]?.endTime && ms >= trackTimes[trackId].endTime!) {
+            console.log('開始位置は終了位置より前に設定する必要があります')
+            return
+        }
+
         setTrackTimes(prev => ({
             ...prev,
             [trackId]: {
@@ -126,6 +133,13 @@ export function PlaylistView({
     const setLoopEndPositionB = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
+        
+        // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
+        if (trackTimes[trackId]?.startTime && ms <= trackTimes[trackId].startTime!) {
+            console.log('終了位置は開始位置より後に設定する必要があります')
+            return
+        }
+
         setTrackTimes(prev => ({
             ...prev,
             [trackId]: {
@@ -140,11 +154,19 @@ export function PlaylistView({
     const setCustomLoopEndA = (trackId: string) => {
         const timeInSeconds = parseFloat(trackTimes[trackId]?.inputStartTime ?? '0')
         if (!isNaN(timeInSeconds)) {
+            const newStartTime = timeInSeconds * 1000
+            
+            // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
+            if (trackTimes[trackId]?.endTime && newStartTime >= trackTimes[trackId].endTime!) {
+                console.log('開始位置は終了位置より前に設定する必要があります')
+                return
+            }
+
             setTrackTimes(prev => ({
                 ...prev,
                 [trackId]: {
                     ...prev[trackId],
-                    startTime: timeInSeconds * 1000
+                    startTime: newStartTime
                 }
             }))
         }
@@ -153,11 +175,19 @@ export function PlaylistView({
     const setCustomLoopEndB = (trackId: string) => {
         const timeInSeconds = parseFloat(trackTimes[trackId]?.inputEndTime ?? '0')
         if (!isNaN(timeInSeconds)) {
+            const newEndTime = timeInSeconds * 1000
+            
+            // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
+            if (trackTimes[trackId]?.startTime && newEndTime <= trackTimes[trackId].startTime!) {
+                console.log('終了位置は開始位置より後に設定する必要があります')
+                return
+            }
+
             setTrackTimes(prev => ({
                 ...prev,
                 [trackId]: {
                     ...prev[trackId],
-                    endTime: timeInSeconds * 1000
+                    endTime: newEndTime
                 }
             }))
         }
@@ -256,7 +286,7 @@ export function PlaylistView({
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
                                                 {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -
-                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : '00:00'}
+                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : formatTime(track.defaultEndTime)}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
                                                 <IconButton
