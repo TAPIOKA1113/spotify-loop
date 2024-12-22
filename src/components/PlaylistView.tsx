@@ -40,6 +40,15 @@ interface PlaylistViewProps {
 
 }
 
+interface TrackTimes {
+    [trackId: string]: {
+        startTime: number | null;
+        endTime: number | null;
+        inputStartTime: string;
+        inputEndTime: string;
+    }
+}
+
 export function PlaylistView({
     token,
     playlists,
@@ -49,14 +58,10 @@ export function PlaylistView({
 
 }: PlaylistViewProps) {
 
-    const [loopEndA, setLoopEndA] = useState<number | null>(null)
-    const [loopEndB, setLoopEndB] = useState<number | null>(null)
-    const [inputStartTime, setInputStartTime] = useState<string>('')
-    const [inputEndTime, setInputEndTime] = useState<string>('')
     const [toggleSwitch, setToggleSwitch] = useState(true)
     const [currentTrack, setCurrentTrack] = useState<string>('')
     const [currentlyPlayingTrack, setCurrentlyPlayingTrack] = useState<string>('')
-
+    const [trackTimes, setTrackTimes] = useState<TrackTimes>({})
 
     useEffect(() => {
         const handleKeyPress = async (event: KeyboardEvent) => {
@@ -70,7 +75,7 @@ export function PlaylistView({
                     await spotifyApi.play(token, { deviceId: devices.devices[0].id ?? '' })
                 }
             } else if (event.code === 'ArrowLeft' && !event.repeat) {
-                await spotifyApi.seek(token, loopEndA ?? 0)
+                await spotifyApi.seek(token, trackTimes[currentTrack]?.startTime ?? 0)
             }
         }
 
@@ -78,21 +83,22 @@ export function PlaylistView({
         return () => {
             document.removeEventListener('keydown', handleKeyPress)
         }
-    }, [token, loopEndA])
+    }, [token, trackTimes, currentTrack])
 
     useEffect(() => {
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0
+            const currentTrackId = state?.item?.id
 
-            if (toggleSwitch && loopEndB !== null && ms > loopEndB) {
-                spotifyApi.seek(token, loopEndA ?? 0)
-                console.log(`Bループを超えたため、Aに戻ります: ${loopEndA}ms`)
+            if (currentTrackId && toggleSwitch && trackTimes[currentTrackId]?.endTime !== null && ms > trackTimes[currentTrackId].endTime!) {
+                spotifyApi.seek(token, trackTimes[currentTrackId].startTime ?? 0)
+                console.log(`Bループを超えたため、Aに戻ります: ${trackTimes[currentTrackId].startTime}ms`)
             }
         }, 500)
 
         return () => clearInterval(interval)
-    }, [loopEndA, loopEndB, token, toggleSwitch])
+    }, [trackTimes, token, toggleSwitch])
 
     // Previous functions remain the same
     const formatTime = (ms: number) => {
@@ -105,33 +111,57 @@ export function PlaylistView({
     }
 
 
-    const setLoopEndPositionA = async () => {
+    const setLoopEndPositionA = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
-        setLoopEndA(ms)
-        setInputStartTime(formatTime(ms))
+        setTrackTimes(prev => ({
+            ...prev,
+            [trackId]: {
+                ...prev[trackId],
+                startTime: ms,
+                inputStartTime: formatTime(ms)
+            }
+        }))
         console.log(`Aループの終了位置を設定しました: ${ms}ms`)
     }
 
-    const setLoopEndPositionB = async () => {
+    const setLoopEndPositionB = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
-        setLoopEndB(ms)
-        setInputEndTime(formatTime(ms))
+        setTrackTimes(prev => ({
+            ...prev,
+            [trackId]: {
+                ...prev[trackId],
+                endTime: ms,
+                inputEndTime: formatTime(ms)
+            }
+        }))
         console.log(`Bループの終了位置を設定しました: ${ms}ms`)
     }
 
-    const setCustomLoopEndA = () => {
-        const timeInSeconds = parseFloat(inputStartTime)
+    const setCustomLoopEndA = (trackId: string) => {
+        const timeInSeconds = parseFloat(trackTimes[trackId]?.inputStartTime ?? '0')
         if (!isNaN(timeInSeconds)) {
-            setLoopEndA(timeInSeconds * 1000)
+            setTrackTimes(prev => ({
+                ...prev,
+                [trackId]: {
+                    ...prev[trackId],
+                    startTime: timeInSeconds * 1000
+                }
+            }))
         }
     }
 
-    const setCustomLoopEndB = () => {
-        const timeInSeconds = parseFloat(inputEndTime)
+    const setCustomLoopEndB = (trackId: string) => {
+        const timeInSeconds = parseFloat(trackTimes[trackId]?.inputEndTime ?? '0')
         if (!isNaN(timeInSeconds)) {
-            setLoopEndB(timeInSeconds * 1000)
+            setTrackTimes(prev => ({
+                ...prev,
+                [trackId]: {
+                    ...prev[trackId],
+                    endTime: timeInSeconds * 1000
+                }
+            }))
         }
     }
 
@@ -142,12 +172,20 @@ export function PlaylistView({
     const handlePlayButton = async (uri: string, trackId: string) => {
         setCurrentlyPlayingTrack(currentlyPlayingTrack === trackId ? '' : trackId);
         const devices = await spotifyApi.getDevices(token)
-        console.log(uri)
-        console.log(devices)
+        
         if (currentlyPlayingTrack === trackId) {
             await spotifyApi.pause(token);
         } else {
-            await spotifyApi.play(token, { deviceId: "5ccb304f0655d8412e648ba55225034d1caec96d", uris: [uri] });
+            await spotifyApi.play(token, { 
+                deviceId: "5ccb304f0655d8412e648ba55225034d1caec96d", 
+                uris: [uri] 
+            });
+            // 曲の再生開始後、開始位置にシーク
+            if (trackTimes[trackId]?.startTime) {
+                setTimeout(async () => {
+                    await spotifyApi.seek(token, trackTimes[trackId].startTime ?? 0);
+                }, 500);
+            }
         }
     };
 
@@ -183,7 +221,8 @@ export function PlaylistView({
                                         </HStack>
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
-                                                {loopEndA ? formatTime(loopEndA) : '00:00'} - {loopEndB ? formatTime(loopEndB) : '00:00'}
+                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} - 
+                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : '00:00'}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
                                                 <IconButton
@@ -208,23 +247,35 @@ export function PlaylistView({
                                         <VStack align="stretch" p={2} bg="gray.100" rounded="md">
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
-                                                <Button size="sm" onClick={setLoopEndPositionA}>Now</Button>
+                                                <Button size="sm" onClick={() => setLoopEndPositionA(track.id)}>Now</Button>
                                                 <Input
                                                     size="sm"
-                                                    value={inputStartTime}
-                                                    onChange={(e) => setInputStartTime(e.target.value)}
-                                                    onBlur={setCustomLoopEndA}
+                                                    value={trackTimes[track.id]?.inputStartTime ?? ''}
+                                                    onChange={(e) => setTrackTimes(prev => ({
+                                                        ...prev,
+                                                        [track.id]: {
+                                                            ...prev[track.id],
+                                                            inputStartTime: e.target.value
+                                                        }
+                                                    }))}
+                                                    onBlur={() => setCustomLoopEndA(track.id)}
                                                     placeholder="00:00"
                                                 />
                                             </HStack>
                                             <HStack>
                                                 <Text w="24">終了位置</Text>
-                                                <Button size="sm" onClick={setLoopEndPositionB}>Now</Button>
+                                                <Button size="sm" onClick={() => setLoopEndPositionB(track.id)}>Now</Button>
                                                 <Input
                                                     size="sm"
-                                                    value={inputEndTime}
-                                                    onChange={(e) => setInputEndTime(e.target.value)}
-                                                    onBlur={setCustomLoopEndB}
+                                                    value={trackTimes[track.id]?.inputEndTime ?? ''}
+                                                    onChange={(e) => setTrackTimes(prev => ({
+                                                        ...prev,
+                                                        [track.id]: {
+                                                            ...prev[track.id],
+                                                            inputEndTime: e.target.value
+                                                        }
+                                                    }))}
+                                                    onBlur={() => setCustomLoopEndB(track.id)}
                                                     placeholder="00:00"
                                                 />
                                             </HStack>
