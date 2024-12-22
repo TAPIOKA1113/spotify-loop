@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import SpotifyPlayer from 'react-spotify-web-playback'
-import { spotifyApi } from 'react-spotify-web-playback'
 import {
     Button,
     VStack,

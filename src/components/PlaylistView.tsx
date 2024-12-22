@@ -52,8 +52,6 @@ interface TrackTimes {
 export function PlaylistView({
     token,
     playlists,
-    spotifyUrl,
-    onUpdateTrackTimes,
     onDeletePlaylist,
 
 }: PlaylistViewProps) {
