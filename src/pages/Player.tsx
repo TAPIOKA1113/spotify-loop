@@ -7,6 +7,8 @@ import {
 } from '@yamada-ui/react'
 import { PlaylistView } from '../components/PlaylistView'
 import { PlaylistModal } from '../components/Modal/PlaylistModal'
+import ShuffleButton from '../components/ShuffleButton'
+import RepeatButton from '../components/RepeatButton'
 
 interface PlayerProps {
     access_token: string
@@ -35,6 +37,9 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [playlists, setPlaylists] = useState<Playlist[]>([])
     const [spotifyUrl, setSpotifyUrl] = useState<string>('')
+    const [isActive, setIsActive] = useState(false)
+    const [shuffle, setShuffle] = useState(false)
+    const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         setPlaylists([...playlists, newPlaylist])
@@ -84,7 +89,16 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     />
 
                     <Box>
-                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name='spotify-loop' initialVolume={0.2} />
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name='spotify-loop' initialVolume={0.2} magnifySliderOnHover={true} components={{
+                            leftButton: (
+                                <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
+                            ),
+                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />,
+                        }} callback={state => {
+                            setIsActive(state.isActive)
+                            setShuffle(state.shuffle)
+                            setRepeat(state.repeat)
+                        }} />
                     </Box>
                 </VStack>
 
