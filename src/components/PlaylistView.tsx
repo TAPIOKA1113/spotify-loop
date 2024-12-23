@@ -66,7 +66,7 @@ export function PlaylistView({
             const currentTrackId = state?.item?.id
             const duration_ms = state?.item?.duration_ms ?? 0
 
-            if (ms >= duration_ms) {
+            if (ms >= duration_ms && currentlyPlayingTrack !== '') {
                 await spotifyApi.pause(token)
                 return
             }
@@ -188,8 +188,53 @@ export function PlaylistView({
         }
     };
 
-    const handlePlayFromBeginning = (playlistId: string) => {
-        console.log(playlistId)
+    const handlePlayFromBeginning = async (playlist: Playlist) => {
+        const devices = await spotifyApi.getDevices(token);
+        const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
+        const device_id = spotifyLoopDevice?.id;
+        const playlistTracks = playlist.tracks.map(track => {
+            return {
+                ...track
+            }
+        })
+        const uris = playlistTracks.map(track => `spotify:track:${track.trackId}`)
+        const initialSongPosition = playlistTracks[0].startTime ?? 0
+
+        if (!device_id) {
+            console.error('spotify-loopデバイスが見つかりません');
+            return;
+        }
+
+        // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
+        if (!spotifyLoopDevice.is_active) {
+            await fetch('https://api.spotify.com/v1/me/player', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    device_ids: [device_id],
+                    play: false
+                })
+            });
+        }
+
+
+        await fetch('https://api.spotify.com/v1/me/player/play', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                uris: uris,
+                position_ms: initialSongPosition,
+                device_id: device_id
+            })
+        });
+
+        setCurrentlyPlayingTrack(playlist.tracks[0].id)
     }
 
     const handleOpenEditPlaylistModal = (playlist: Playlist) => {
@@ -232,7 +277,7 @@ export function PlaylistView({
                                                     icon={<PlayCircle />}
                                                     size="sm"
                                                     variant="ghost"
-                                                    onClick={() => handlePlayFromBeginning(playlist.id)}
+                                                    onClick={() => handlePlayFromBeginning(playlist)}
                                                 />
                                             </Tooltip>
                                             <Tooltip label="プレイリストを編集">
