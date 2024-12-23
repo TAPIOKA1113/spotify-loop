@@ -35,7 +35,7 @@ interface PlaylistViewProps {
     spotifyUrl: string;
     onDeletePlaylist: (playlistId: string) => void;
     onUpdateTrackTimes: (playlistId: string, trackId: string, startTime: number, endTime: number) => void;
-
+    deviceName: string;
 
 }
 
@@ -45,11 +45,13 @@ export function PlaylistView({
     playlists,
     onDeletePlaylist,
     onUpdateTrackTimes,
+    deviceName,
 }: PlaylistViewProps) {
 
     const [toggleSwitch, setToggleSwitch] = useState(true)
     const [currentTrack, setCurrentTrack] = useState<string>('')
     const [currentlyPlayingTrack, setCurrentlyPlayingTrack] = useState<string>('')
+
 
 
     useEffect(() => {
@@ -141,10 +143,12 @@ export function PlaylistView({
         } else {
             const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0;
             const devices = await spotifyApi.getDevices(token);
-            const spotifyLoopDevice = devices.devices.find(device => device.name === 'spotify-loop');
+            const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
             console.log(devices)
             console.log(device_id)
+            console.log(currentlyPlayingTrack)
+            console.log(playlists)
 
             if (!device_id) {
                 console.error('spotify-loopデバイスが見つかりません');
@@ -240,7 +244,7 @@ export function PlaylistView({
 
                                     {currentTrack === track.id && (
                                         <VStack align="stretch" p={2} bg="gray.100" rounded="md">
-                                            <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
+                                            <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループ��一時中断されます。</Text>
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionA(track.id, playlist.id)}>Now</Button>

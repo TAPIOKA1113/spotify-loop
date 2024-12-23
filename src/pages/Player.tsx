@@ -68,7 +68,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [isActive, setIsActive] = useState(false)
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
-
+    const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
 
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
@@ -114,10 +114,11 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         spotifyUrl={spotifyUrl}
                         onDeletePlaylist={handleDeletePlaylist}
                         onUpdateTrackTimes={handleUpdateTrackTimes}
+                        deviceName={deviceName}
                     />
 
                     <Box>
-                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name='spotify-loop' initialVolume={0.2} magnifySliderOnHover={true} components={{
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} components={{
                             leftButton: (
                                 <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
                             ),
