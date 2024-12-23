@@ -136,15 +136,15 @@ export function PlaylistView({
         }
     }
     const handlePlayButton = async (uri: string, id: string) => {
-        setCurrentlyPlayingTrack(currentlyPlayingTrack === id ? '' : id);
-
         if (currentlyPlayingTrack === id) {
             await spotifyApi.pause(token);
+            setCurrentlyPlayingTrack('');
         } else {
-            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0;
+            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.startTime ?? 0;
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
+
             console.log(devices)
             console.log(device_id)
             console.log(currentlyPlayingTrack)
@@ -184,7 +184,7 @@ export function PlaylistView({
                 })
             });
 
-
+            setCurrentlyPlayingTrack(id);
         }
     };
 
@@ -244,7 +244,7 @@ export function PlaylistView({
 
                                     {currentTrack === track.id && (
                                         <VStack align="stretch" p={2} bg="gray.100" rounded="md">
-                                            <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループ��一時中断されます。</Text>
+                                            <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionA(track.id, playlist.id)}>Now</Button>
