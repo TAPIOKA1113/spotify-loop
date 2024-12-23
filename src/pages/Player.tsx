@@ -6,7 +6,7 @@ import {
     Box,
 } from '@yamada-ui/react'
 import { PlaylistView } from '../components/PlaylistView'
-import { PlaylistModal } from '../components/Modal/PlaylistModal'
+import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
 import { v4 as uuidv4 } from 'uuid'
@@ -71,7 +71,13 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
-        setPlaylists([...playlists, newPlaylist])
+        if (newPlaylist.id) {
+            setPlaylists(playlists.map(playlist =>
+                playlist.id === newPlaylist.id ? newPlaylist : playlist
+            ))
+        } else {
+            setPlaylists([...playlists, newPlaylist])
+        }
     }
 
     const handleDeletePlaylist = (playlistId: string) => {
@@ -115,6 +121,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         onDeletePlaylist={handleDeletePlaylist}
                         onUpdateTrackTimes={handleUpdateTrackTimes}
                         deviceName={deviceName}
+                        onSavePlaylist={handleSavePlaylist}
                     />
 
                     <Box>
@@ -131,7 +138,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     </Box>
                 </VStack>
 
-                <PlaylistModal
+                <PlaylistCreateModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     token={token}

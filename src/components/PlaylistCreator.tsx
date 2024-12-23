@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@yamada-ui/react'
-import { PlaylistModal } from './Modal/PlaylistModal'
+import { PlaylistCreateModal } from './Modal/PlaylistCreateModal'
 
 
 interface PlaylistCreatorProps {
@@ -22,7 +22,7 @@ export function PlaylistCreator({ token }: PlaylistCreatorProps) {
                     プレイリストを作成
                 </Button>
 
-                <PlaylistModal
+                <PlaylistCreateModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     token={token}

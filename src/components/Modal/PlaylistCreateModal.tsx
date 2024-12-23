@@ -34,14 +34,14 @@ interface Playlist {
     tracks: Track[];
 }
 
-interface PlaylistModalProps {
+interface PlaylistCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     token: string;
     onSavePlaylist: (playlist: Playlist) => void;
 }
 
-export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: PlaylistModalProps) {
+export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: PlaylistCreateModalProps) {
     const [tracks, setTracks] = useState<Track[]>([])
     const [newTrackId, setNewTrackId] = useState('')
     const [playlistName, setPlaylistName] = useState('')
