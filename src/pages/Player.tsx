@@ -42,7 +42,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
             tracks: [
                 {
                     id: uuidv4(),
-                    trackId: '3RgE4JfthJ3tZm14Piulac',  
+                    trackId: '3RgE4JfthJ3tZm14Piulac',
                     artist: 'Within Destruction',
                     name: 'Scars',
                     cover: 'https://i.scdn.co/image/ab67616d0000b273cc26e030a3e2a84e8b066721',
@@ -51,7 +51,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                 },
                 {
                     id: uuidv4(),
-                    trackId: '6f8WPDb2IoYSKu5LgHcyrw',  
+                    trackId: '6f8WPDb2IoYSKu5LgHcyrw',
                     artist: 'Periphery',
                     name: 'Scarlet',
                     cover: 'https://i.scdn.co/image/ab67616d0000b2737cc1955a4381fa871eb40d2f',
@@ -69,7 +69,6 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
-
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         setPlaylists([...playlists, newPlaylist])
@@ -97,6 +96,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
             return playlist
         }))
     }
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
