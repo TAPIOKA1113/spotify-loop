@@ -21,8 +21,8 @@ interface Track {
     name: string;
     cover: string;
     defaultEndTime: number;
-    startTime?: number;
-    endTime?: number;
+    startTime: number;
+    endTime: number;
 }
 
 interface Playlist {
@@ -158,47 +158,6 @@ export function PlaylistView({
         console.log(`Bループの終了位置を設定しました: ${ms}ms`)
     }
 
-    const setCustomLoopEndA = (trackId: string) => {
-        const timeInSeconds = parseFloat(trackTimes[trackId]?.inputStartTime ?? '0')
-        if (!isNaN(timeInSeconds)) {
-            const newStartTime = timeInSeconds * 1000
-
-            // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
-            if (trackTimes[trackId]?.endTime && newStartTime >= trackTimes[trackId].endTime!) {
-                console.log('開始位置は終了位置より前に設定する必要があります')
-                return
-            }
-
-            setTrackTimes(prev => ({
-                ...prev,
-                [trackId]: {
-                    ...prev[trackId],
-                    startTime: newStartTime
-                }
-            }))
-        }
-    }
-
-    const setCustomLoopEndB = (trackId: string) => {
-        const timeInSeconds = parseFloat(trackTimes[trackId]?.inputEndTime ?? '0')
-        if (!isNaN(timeInSeconds)) {
-            const newEndTime = timeInSeconds * 1000
-
-            // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
-            if (trackTimes[trackId]?.startTime && newEndTime <= trackTimes[trackId].startTime!) {
-                console.log('終了位置は開始位置より後に設定する必要があります')
-                return
-            }
-
-            setTrackTimes(prev => ({
-                ...prev,
-                [trackId]: {
-                    ...prev[trackId],
-                    endTime: newEndTime
-                }
-            }))
-        }
-    }
 
     const handleEditButton = (trackId: string) => {
         if (currentTrack === trackId) {
@@ -292,8 +251,8 @@ export function PlaylistView({
                                         </HStack>
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
-                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -  
-                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : formatTime(track.defaultEndTime)}
+                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -
+                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : formatTime(track.endTime)}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
                                                 <IconButton
@@ -319,36 +278,13 @@ export function PlaylistView({
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionA(track.id)}>Now</Button>
-                                                <Input
-                                                    size="sm"
-                                                    value={trackTimes[track.id]?.inputStartTime ?? ''}
-                                                    onChange={(e) => setTrackTimes(prev => ({
-                                                        ...prev,
-                                                        [track.id]: {
-                                                            ...prev[track.id],
-                                                            inputStartTime: e.target.value
-                                                        }
-                                                    }))}
-                                                    onBlur={() => setCustomLoopEndA(track.id)}
-                                                    placeholder="00:00"
-                                                />
+                                                <Text>{trackTimes[track.id]?.inputStartTime ?? '00:00'}</Text>
                                             </HStack>
                                             <HStack>
                                                 <Text w="24">終了位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionB(track.id)}>Now</Button>
-                                                <Input
-                                                    size="sm"
-                                                    value={trackTimes[track.id]?.inputEndTime ?? ''}
-                                                    onChange={(e) => setTrackTimes(prev => ({
-                                                        ...prev,
-                                                        [track.id]: {
-                                                            ...prev[track.id],
-                                                            inputEndTime: e.target.value
-                                                        }
-                                                    }))}
-                                                    onBlur={() => setCustomLoopEndB(track.id)}
-                                                    placeholder={formatTime(track.defaultEndTime)}
-                                                />
+                                                <Text>{trackTimes[track.id]?.inputEndTime ?? formatTime(track.endTime)}</Text>
+
                                             </HStack>
                                         </VStack>
                                     )}
@@ -357,8 +293,9 @@ export function PlaylistView({
                         </VStack>
                     </AccordionPanel>
                 </AccordionItem>
-            ))}
-        </Accordion>
+            ))
+            }
+        </Accordion >
     )
 }
 

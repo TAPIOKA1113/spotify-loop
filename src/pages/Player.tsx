@@ -20,9 +20,8 @@ interface Track {
     artist: string;
     name: string;
     cover: string;
-    defaultEndTime: number;
-    startTime?: number;
-    endTime?: number;
+    startTime: number;
+    endTime: number;
 }
 
 interface Playlist {
@@ -47,7 +46,8 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     artist: 'Within Destruction',
                     name: 'Scars',
                     cover: 'https://i.scdn.co/image/ab67616d0000b273cc26e030a3e2a84e8b066721',
-                    defaultEndTime: 221888
+                    startTime: 0,
+                    endTime: 221888
                 },
                 {
                     id: uuidv4(),
@@ -55,7 +55,8 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     artist: 'Periphery',
                     name: 'Scarlet',
                     cover: 'https://i.scdn.co/image/ab67616d0000b2737cc1955a4381fa871eb40d2f',
-                    defaultEndTime: 248800
+                    startTime: 0,
+                    endTime: 248800
                 }
             ]
         }
