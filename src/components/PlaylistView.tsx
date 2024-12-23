@@ -16,6 +16,7 @@ import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
 interface Track {
     id: string;
+    trackId: string;
     artist: string;
     name: string;
     cover: string;
@@ -118,10 +119,10 @@ export function PlaylistView({
     const setLoopEndPositionA = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
-        
+
         // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
         if (trackTimes[trackId]?.endTime && ms >= trackTimes[trackId].endTime!) {
-            console.log('開���位置は終了位置より前に設定する必要があります')
+            console.log('開始位置は終了位置より前に設定する必要があります')
             return
         }
 
@@ -139,7 +140,7 @@ export function PlaylistView({
     const setLoopEndPositionB = async (trackId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
-        
+
         // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
         if (trackTimes[trackId]?.startTime && ms <= trackTimes[trackId].startTime!) {
             console.log('終了位置は開始位置より後に設定する必要があります')
@@ -161,7 +162,7 @@ export function PlaylistView({
         const timeInSeconds = parseFloat(trackTimes[trackId]?.inputStartTime ?? '0')
         if (!isNaN(timeInSeconds)) {
             const newStartTime = timeInSeconds * 1000
-            
+
             // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
             if (trackTimes[trackId]?.endTime && newStartTime >= trackTimes[trackId].endTime!) {
                 console.log('開始位置は終了位置より前に設定する必要があります')
@@ -182,7 +183,7 @@ export function PlaylistView({
         const timeInSeconds = parseFloat(trackTimes[trackId]?.inputEndTime ?? '0')
         if (!isNaN(timeInSeconds)) {
             const newEndTime = timeInSeconds * 1000
-            
+
             // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
             if (trackTimes[trackId]?.startTime && newEndTime <= trackTimes[trackId].startTime!) {
                 console.log('終了位置は開始位置より後に設定する必要があります')
@@ -208,13 +209,13 @@ export function PlaylistView({
             setCurrentTrack(trackId)
         }
     }
-    const handlePlayButton = async (uri: string, trackId: string) => {
-        setCurrentlyPlayingTrack(currentlyPlayingTrack === trackId ? '' : trackId);
+    const handlePlayButton = async (uri: string, id: string) => {
+        setCurrentlyPlayingTrack(currentlyPlayingTrack === id ? '' : id);
 
-        if (currentlyPlayingTrack === trackId) {
+        if (currentlyPlayingTrack === id) {
             await spotifyApi.pause(token);
         } else {
-            const position_ms = trackTimes[trackId]?.startTime ?? 0;
+            const position_ms = trackTimes[id]?.startTime ?? 0;
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === 'spotify-loop');
             const device_id = spotifyLoopDevice?.id;
@@ -291,7 +292,7 @@ export function PlaylistView({
                                         </HStack>
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
-                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -
+                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -  
                                                 {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : formatTime(track.defaultEndTime)}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
@@ -300,7 +301,7 @@ export function PlaylistView({
                                                     icon={currentlyPlayingTrack === track.id ? <Pause /> : <Play />}
                                                     size="sm"
                                                     variant="ghost"
-                                                    onClick={() => handlePlayButton(`spotify:track:${track.id}`, track.id)}
+                                                    onClick={() => handlePlayButton(`spotify:track:${track.trackId}`, track.id)}
                                                 />
                                             </Tooltip>
                                             <IconButton
@@ -346,7 +347,7 @@ export function PlaylistView({
                                                         }
                                                     }))}
                                                     onBlur={() => setCustomLoopEndB(track.id)}
-                                                    placeholder="00:00"
+                                                    placeholder={formatTime(track.defaultEndTime)}
                                                 />
                                             </HStack>
                                         </VStack>

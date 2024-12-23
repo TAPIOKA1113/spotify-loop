@@ -11,14 +11,16 @@ import {
     HStack,
     IconButton,
     Text,
-    Box,
-    Image
+    Image,
+    Reorder,
+    ReorderItem,
 } from '@yamada-ui/react'
 import { Plus, Trash2 } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
-
+import { v4 as uuidv4 } from 'uuid'
 interface Track {
     id: string;
+    trackId: string;
     artist: string;
     name: string;
     cover: string;
@@ -55,7 +57,7 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
             const TrackName = Track.name
             const TrackArtist = Track.artists[0].name
             const trackId = newTrackId.split(':').pop() || newTrackId
-            setTracks([...tracks, { id: trackId, name: TrackName, artist: TrackArtist, cover: Track.album.images[0].url, defaultEndTime: Track.duration_ms }])
+            setTracks([...tracks, { id: uuidv4(), trackId: trackId, name: TrackName, artist: TrackArtist, cover: Track.album.images[0].url, defaultEndTime: Track.duration_ms }])
             setNewTrackId('')
         }
     }
@@ -67,7 +69,7 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
     const savePlaylist = () => {
         if (playlistName && tracks.length > 0) {
             const newPlaylist: Playlist = {
-                id: Date.now().toString(), 
+                id: Date.now().toString(),
                 name: playlistName,
                 tracks: tracks
             }
@@ -76,6 +78,14 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
             setTracks([])
             onClose()
         }
+    }
+
+    const handleReorder = (values: string[]) => {
+        const newOrder = values.map(value => {
+            const id = value
+            return tracks.find(track => track.id === id)!
+        })
+        setTracks(newOrder)
     }
 
     return (
@@ -106,29 +116,34 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
                     </HStack>
 
                     <VStack align="stretch" >
-                        {tracks.map((track, index) => (
-                            <Box
-                                key={index}
-                                p={3}
-                                bg="gray.50"
-                                rounded="md"
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                            >
-                                <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
-                                <Text flex={1} ml={3}>
-                                    {track.name} - {track.artist}
-                                </Text>
-                                <IconButton
-                                    aria-label="Remove track"
-                                    icon={<Trash2 />}
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => removeTrack(index)}
-                                />
-                            </Box>
-                        ))}
+                        <Reorder
+                            onCompleteChange={(values) => handleReorder(values)}
+                        >
+                            {tracks.map((track, index) => (
+                                <ReorderItem
+                                    key={track.id}
+                                    value={track.id}
+                                    p={3}
+                                    bg="gray.50"
+                                    rounded="md"
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="space-between"
+                                >
+                                    <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
+                                    <Text flex={1} ml={3}>
+                                        {track.name} - {track.artist}
+                                    </Text>
+                                    <IconButton
+                                        aria-label="Remove track"
+                                        icon={<Trash2 />}
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => removeTrack(index)}
+                                    />
+                                </ReorderItem>
+                            ))}
+                        </Reorder>
                     </VStack>
 
                     {tracks.length > 0 && (

@@ -9,13 +9,14 @@ import { PlaylistView } from '../components/PlaylistView'
 import { PlaylistModal } from '../components/Modal/PlaylistModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
-
+import { v4 as uuidv4 } from 'uuid'
 interface PlayerProps {
     access_token: string
 }
 
 interface Track {
     id: string;
+    trackId: string;
     artist: string;
     name: string;
     cover: string;
@@ -34,12 +35,40 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const token = access_token
 
 
+    // 初期プレイリストのデータ
+    const initialPlaylists: Playlist[] = [
+        {
+            id: '1',
+            name: 'ブレイクダウン',
+            tracks: [
+                {
+                    id: uuidv4(),
+                    trackId: '3RgE4JfthJ3tZm14Piulac',  
+                    artist: 'Within Destruction',
+                    name: 'Scars',
+                    cover: 'https://i.scdn.co/image/ab67616d0000b273cc26e030a3e2a84e8b066721',
+                    defaultEndTime: 221888
+                },
+                {
+                    id: uuidv4(),
+                    trackId: '6f8WPDb2IoYSKu5LgHcyrw',  
+                    artist: 'Periphery',
+                    name: 'Scarlet',
+                    cover: 'https://i.scdn.co/image/ab67616d0000b2737cc1955a4381fa871eb40d2f',
+                    defaultEndTime: 248800
+                }
+            ]
+        }
+    ]
+
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [playlists, setPlaylists] = useState<Playlist[]>([])
+    const [playlists, setPlaylists] = useState<Playlist[]>(initialPlaylists)
     const [spotifyUrl, setSpotifyUrl] = useState<string>('')
     const [isActive, setIsActive] = useState(false)
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
+
+
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         setPlaylists([...playlists, newPlaylist])
