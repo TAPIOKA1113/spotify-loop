@@ -39,14 +39,6 @@ interface PlaylistViewProps {
 
 }
 
-interface TrackTimes {
-    [trackId: string]: {
-        startTime: number | null;
-        endTime: number | null;
-        inputStartTime: string;
-        inputEndTime: string;
-    }
-}
 
 export function PlaylistView({
     token,
@@ -58,29 +50,7 @@ export function PlaylistView({
     const [toggleSwitch, setToggleSwitch] = useState(true)
     const [currentTrack, setCurrentTrack] = useState<string>('')
     const [currentlyPlayingTrack, setCurrentlyPlayingTrack] = useState<string>('')
-    const [trackTimes, setTrackTimes] = useState<TrackTimes>({})
 
-    useEffect(() => {
-        const handleKeyPress = async (event: KeyboardEvent) => {
-            if (event.code === 'Space' && !event.repeat) {
-                event.preventDefault()
-                const state = await spotifyApi.getPlaybackState(token)
-                if (state?.is_playing) {
-                    await spotifyApi.pause(token)
-                } else {
-                    const devices = await spotifyApi.getDevices(token)
-                    await spotifyApi.play(token, { deviceId: devices.devices[0].id ?? '' })
-                }
-            } else if (event.code === 'ArrowLeft' && !event.repeat) {
-                await spotifyApi.seek(token, trackTimes[currentTrack]?.startTime ?? 0)
-            }
-        }
-
-        document.addEventListener('keydown', handleKeyPress)
-        return () => {
-            document.removeEventListener('keydown', handleKeyPress)
-        }
-    }, [token, trackTimes, currentTrack])
 
     useEffect(() => {
         const interval = setInterval(async () => {
@@ -94,16 +64,15 @@ export function PlaylistView({
                 return
             }
 
-            if (currentTrackId && toggleSwitch && trackTimes[currentTrackId]?.endTime !== null && ms > trackTimes[currentTrackId].endTime!) {
-                await spotifyApi.seek(token, trackTimes[currentTrackId].startTime ?? 0)
-                console.log(`Bループを超えたため、Aに戻ります: ${trackTimes[currentTrackId].startTime}ms`)
+            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.endTime!) {
+                await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0)
+                console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime}ms`)
             }
         }, 500)
 
         return () => clearInterval(interval)
-    }, [trackTimes, token, toggleSwitch])
+    }, [currentlyPlayingTrack, token, toggleSwitch])
 
-    // Previous functions remain the same
     const formatTime = (ms: number) => {
         const totalSeconds = ms / 1000
         const minutes = Math.floor(totalSeconds / 60)
@@ -113,49 +82,45 @@ export function PlaylistView({
         return `${minutes}:${formattedSeconds}`
     }
 
-
-    const setLoopEndPositionA = async (trackId: string, playlistId: string) => {
+    // 開始位置を設定
+    const setLoopEndPositionA = async (id: string, playlistId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
+        const duration_ms: number = state?.item?.duration_ms ?? 0
+
+        // 現在のトラックのendTimeを取得
+        const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
+        const currentEndTime = currentTrack?.endTime ?? duration_ms  // endTimeが未設定の場合は曲の長さを使用
 
         // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
-        if (trackTimes[trackId]?.endTime && ms >= trackTimes[trackId].endTime!) {
+        if (currentEndTime && ms >= currentEndTime) {
             console.log('開始位置は終了位置より前に設定する必要があります')
             return
         }
 
-        setTrackTimes(prev => ({
-            ...prev,
-            [trackId]: {
-                ...prev[trackId],
-                startTime: ms,
-                inputStartTime: formatTime(ms)
-            }
-        }))
+        setCurrentlyPlayingTrack(id)
         console.log(`Aループの終了位置を設定しました: ${ms}ms`)
-        onUpdateTrackTimes(playlistId, trackId, trackTimes[trackId].startTime ?? 0, ms)
+        onUpdateTrackTimes(playlistId, id, ms, currentEndTime)
     }
 
-    const setLoopEndPositionB = async (trackId: string, playlistId: string) => {
+    // 終了位置を設定
+    const setLoopEndPositionB = async (id: string, playlistId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
 
+        // 現在のトラックのstartTimeを取得
+        const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
+        const currentStartTime = currentTrack?.startTime ?? 0
+
         // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
-        if (trackTimes[trackId]?.startTime && ms <= trackTimes[trackId].startTime!) {
+        if (currentStartTime && ms <= currentStartTime) {
             console.log('終了位置は開始位置より後に設定する必要があります')
             return
         }
 
-        setTrackTimes(prev => ({
-            ...prev,
-            [trackId]: {
-                ...prev[trackId],
-                endTime: ms,
-                inputEndTime: formatTime(ms)
-            }
-        }))
+        setCurrentlyPlayingTrack(id)
         console.log(`Bループの終了位置を設定しました: ${ms}ms`)
-        onUpdateTrackTimes(playlistId, trackId, trackTimes[trackId].startTime ?? 0, ms)
+        onUpdateTrackTimes(playlistId, id, currentStartTime, ms)
     }
 
 
@@ -174,7 +139,7 @@ export function PlaylistView({
         if (currentlyPlayingTrack === id) {
             await spotifyApi.pause(token);
         } else {
-            const position_ms = trackTimes[id]?.startTime ?? 0;
+            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0;
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === 'spotify-loop');
             const device_id = spotifyLoopDevice?.id;
@@ -251,8 +216,8 @@ export function PlaylistView({
                                         </HStack>
                                         <HStack>
                                             <Text fontSize="sm" color="gray.600">
-                                                {trackTimes[track.id]?.startTime ? formatTime(trackTimes[track.id].startTime ?? 0) : '00:00'} -
-                                                {trackTimes[track.id]?.endTime ? formatTime(trackTimes[track.id].endTime ?? 0) : formatTime(track.endTime)}
+                                                {track.startTime ? formatTime(track.startTime ?? 0) : '00:00'} -
+                                                {track.endTime ? formatTime(track.endTime ?? 0) : formatTime(track.endTime)}
                                             </Text>
                                             <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
                                                 <IconButton
@@ -273,18 +238,18 @@ export function PlaylistView({
                                         </HStack>
                                     </HStack>
 
-                                    {currentTrack === track.id && ( 
+                                    {currentTrack === track.id && (
                                         <VStack align="stretch" p={2} bg="gray.100" rounded="md">
                                             <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionA(track.id, playlist.id)}>Now</Button>
-                                                <Text>{trackTimes[track.id]?.inputStartTime ?? '00:00'}</Text>
+                                                <Text>{formatTime(track.startTime) ?? '00:00'}</Text>
                                             </HStack>
                                             <HStack>
                                                 <Text w="24">終了位置</Text>
                                                 <Button size="sm" onClick={() => setLoopEndPositionB(track.id, playlist.id)}>Now</Button>
-                                                <Text>{trackTimes[track.id]?.inputEndTime ?? formatTime(track.endTime)}</Text>
+                                                <Text>{formatTime(track.endTime) ?? formatTime(track.endTime)}</Text>
 
                                             </HStack>
                                         </VStack>
