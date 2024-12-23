@@ -80,7 +80,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     }
 
 
-    const handleUpdateTrackTimes = (playlistId: string, trackId: string, startTime?: number, endTime?: number) => {
+    const handleUpdateTrackTimes = (playlistId: string, trackId: string, startTime: number, endTime: number) => {
         setSpotifyUrl(`spotify:track:${trackId}`)
         setPlaylists(playlists.map(playlist => {
             if (playlist.id === playlistId) {

@@ -24,7 +24,8 @@ interface Track {
     artist: string;
     name: string;
     cover: string;
-    defaultEndTime: number;
+    startTime: number;
+    endTime: number;
 }
 
 interface Playlist {
@@ -52,12 +53,17 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
 
     const addTrack = async () => {
         const Track = await searchTrackName(newTrackId)
-        console.log(Track)
         if (Track) {
-            const TrackName = Track.name
-            const TrackArtist = Track.artists[0].name
             const trackId = newTrackId.split(':').pop() || newTrackId
-            setTracks([...tracks, { id: uuidv4(), trackId: trackId, name: TrackName, artist: TrackArtist, cover: Track.album.images[0].url, defaultEndTime: Track.duration_ms }])
+            setTracks([...tracks, {
+                id: uuidv4(),
+                trackId: trackId,
+                name: Track.name,
+                artist: Track.artists[0].name,
+                cover: Track.album.images[0].url,
+                startTime: 0,
+                endTime: Track.duration_ms || 0
+            }])
             setNewTrackId('')
         }
     }
@@ -69,7 +75,7 @@ export function PlaylistModal({ isOpen, onClose, token, onSavePlaylist }: Playli
     const savePlaylist = () => {
         if (playlistName && tracks.length > 0) {
             const newPlaylist: Playlist = {
-                id: Date.now().toString(),
+                id: uuidv4(),
                 name: playlistName,
                 tracks: tracks
             }

@@ -7,7 +7,6 @@ import {
     Text,
     Image,
     IconButton,
-    Input,
     Button,
     Tooltip,
 } from '@yamada-ui/react'
@@ -20,7 +19,6 @@ interface Track {
     artist: string;
     name: string;
     cover: string;
-    defaultEndTime: number;
     startTime: number;
     endTime: number;
 }
@@ -36,7 +34,7 @@ interface PlaylistViewProps {
     playlists: Playlist[];
     spotifyUrl: string;
     onDeletePlaylist: (playlistId: string) => void;
-    onUpdateTrackTimes: (playlistId: string, trackId: string, startTime?: number, endTime?: number) => void;
+    onUpdateTrackTimes: (playlistId: string, trackId: string, startTime: number, endTime: number) => void;
 
 
 }
@@ -54,7 +52,7 @@ export function PlaylistView({
     token,
     playlists,
     onDeletePlaylist,
-
+    onUpdateTrackTimes,
 }: PlaylistViewProps) {
 
     const [toggleSwitch, setToggleSwitch] = useState(true)
@@ -221,7 +219,7 @@ export function PlaylistView({
 
 
     return (
-        <Accordion isToggle>
+        <Accordion variant="card"isToggle>
             {playlists.map((playlist) => (
                 <AccordionItem label={playlist.name} key={playlist.id}>
                     <HStack as="header" justify="space-between" p={2}>
@@ -237,7 +235,7 @@ export function PlaylistView({
                             }}
                         />
                     </HStack>
-                    <AccordionPanel pb={4}>
+                    <AccordionPanel pb={4} mt={2}>
                         <VStack align="stretch" >
                             {playlist.tracks.map((track) => (
                                 <VStack key={track.id} align="stretch" >
