@@ -114,7 +114,7 @@ export function PlaylistView({
     }
 
 
-    const setLoopEndPositionA = async (trackId: string) => {
+    const setLoopEndPositionA = async (trackId: string, playlistId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
 
@@ -133,9 +133,10 @@ export function PlaylistView({
             }
         }))
         console.log(`Aループの終了位置を設定しました: ${ms}ms`)
+        onUpdateTrackTimes(playlistId, trackId, trackTimes[trackId].startTime ?? 0, ms)
     }
 
-    const setLoopEndPositionB = async (trackId: string) => {
+    const setLoopEndPositionB = async (trackId: string, playlistId: string) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
 
@@ -154,6 +155,7 @@ export function PlaylistView({
             }
         }))
         console.log(`Bループの終了位置を設定しました: ${ms}ms`)
+        onUpdateTrackTimes(playlistId, trackId, trackTimes[trackId].startTime ?? 0, ms)
     }
 
 
@@ -219,7 +221,7 @@ export function PlaylistView({
 
 
     return (
-        <Accordion variant="card"isToggle>
+        <Accordion variant="card" isToggle>
             {playlists.map((playlist) => (
                 <AccordionItem label={playlist.name} key={playlist.id}>
                     <HStack as="header" justify="space-between" p={2}>
@@ -271,16 +273,17 @@ export function PlaylistView({
                                         </HStack>
                                     </HStack>
 
-                                    {currentTrack === track.id && (
+                                    {currentTrack === track.id && ( 
                                         <VStack align="stretch" p={2} bg="gray.100" rounded="md">
+                                            <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
                                             <HStack>
                                                 <Text w="24">開始位置</Text>
-                                                <Button size="sm" onClick={() => setLoopEndPositionA(track.id)}>Now</Button>
+                                                <Button size="sm" onClick={() => setLoopEndPositionA(track.id, playlist.id)}>Now</Button>
                                                 <Text>{trackTimes[track.id]?.inputStartTime ?? '00:00'}</Text>
                                             </HStack>
                                             <HStack>
                                                 <Text w="24">終了位置</Text>
-                                                <Button size="sm" onClick={() => setLoopEndPositionB(track.id)}>Now</Button>
+                                                <Button size="sm" onClick={() => setLoopEndPositionB(track.id, playlist.id)}>Now</Button>
                                                 <Text>{trackTimes[track.id]?.inputEndTime ?? formatTime(track.endTime)}</Text>
 
                                             </HStack>

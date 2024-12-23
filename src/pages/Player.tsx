@@ -114,8 +114,6 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         spotifyUrl={spotifyUrl}
                         onDeletePlaylist={handleDeletePlaylist}
                         onUpdateTrackTimes={handleUpdateTrackTimes}
-
-
                     />
 
                     <Box>
