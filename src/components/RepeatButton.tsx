@@ -14,7 +14,7 @@ export default function RepeatButton({
         let value: RepeatState = 'off';
 
         if (repeat === 'off') {
-            value = 'track';
+            value = 'context';
         } else if (repeat === 'context') {
             value = 'track';
         }

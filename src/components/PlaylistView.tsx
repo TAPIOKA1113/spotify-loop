@@ -9,8 +9,9 @@ import {
     IconButton,
     Button,
     Tooltip,
+    Box
 } from '@yamada-ui/react'
-import { Edit, Trash2, Play, Pause, PlayCircle, Edit2 } from 'lucide-react'
+import { Edit, Play, Pause, Edit2, PlayCircle } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
 import { PlaylistEditModal } from './Modal/PlaylistEditModal'
@@ -47,7 +48,6 @@ interface PlaylistViewProps {
 export function PlaylistView({
     token,
     playlists,
-    onDeletePlaylist,
     onUpdateTrackTimes,
     deviceName,
     onSavePlaylist,
@@ -204,124 +204,106 @@ export function PlaylistView({
 
 
     return (
-        <>
-            <VStack align="stretch" >
+        <VStack align="stretch" className="bg-gray-800 rounded-lg p-4">
+            <Accordion isToggle variant="card">
                 {playlists.map((playlist) => (
-                    <VStack key={playlist.id} align="stretch" >
-                        <Accordion variant="card" isToggle>
-                            <AccordionItem label={playlist.name} key={playlist.id}>
-                                <HStack as="header" justify="space-between" p={2}>
-                                    <Text fontWeight="bold">{playlist.name}</Text>
-                                    <IconButton
-                                        aria-label="Delete playlist"
-                                        icon={<Trash2 />}
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeletePlaylist(playlist.id);
-                                        }}
-                                    />
+                    <AccordionItem label={playlist.name} key={playlist.id} className="border-b border-gray-700 ">
+                        <AccordionPanel >
+                            <HStack justify="flex-end" mt={1} mb={2}>
+                                <HStack>
+                                    <Tooltip label="はじめから再生">
+                                        <IconButton
+                                            aria-label="はじめから再生"
+                                            icon={<PlayCircle />}
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handlePlayFromBeginning(playlist)}
+                                        />
+                                    </Tooltip>
+                                    <Tooltip label="プレイリストを編集">
+                                        <IconButton
+                                            aria-label="プレイリストを編集"
+                                            icon={<Edit2 />}
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleOpenEditPlaylistModal(playlist)}
+                                        />
+                                    </Tooltip>
                                 </HStack>
-                                <AccordionPanel pb={4} mt={2}>
-                                    <HStack justify="flex-end" mb={2}>
-                                        <HStack>
-                                            <Tooltip label="はじめから再生">
+                            </HStack>
+                            <VStack align="stretch" >
+                                {playlist.tracks.map((track) => (
+                                    <Box key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
+                                        <HStack justify="space-between">
+                                            <HStack >
+                                                <Image src={track.cover} alt={track.name} width={50} height={50} className="rounded-md" />
+                                                <VStack align="start" >
+                                                    <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
+                                                    <Text fontSize="xs" className="text-gray-400">{track.artist}</Text>
+                                                </VStack>
+                                            </HStack>
+                                            <HStack >
+                                                <Text fontSize="xs" className="text-gray-400">
+                                                    {formatTime(track.startTime)} - {formatTime(track.endTime)}
+                                                </Text>
                                                 <IconButton
-                                                    aria-label="はじめから再生"
-                                                    icon={<PlayCircle />}
+                                                    aria-label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}
+                                                    icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                                     size="sm"
                                                     variant="ghost"
-                                                    onClick={() => handlePlayFromBeginning(playlist)}
+                                                    onClick={() => handlePlayButton(`spotify:track:${track.trackId}`, track.id)}
+                                                    className="text-gray-400 hover:text-spotify-green"
                                                 />
-                                            </Tooltip>
-                                            <Tooltip label="プレイリストを編集">
                                                 <IconButton
-                                                    aria-label="プレイリストを編集"
-                                                    icon={<Edit2 />}
+                                                    aria-label="Edit"
+                                                    icon={<Edit className="w-4 h-4" />}
                                                     size="sm"
                                                     variant="ghost"
-                                                    onClick={() => handleOpenEditPlaylistModal(playlist)}
+                                                    onClick={() => handleEditButton(track.id)}
+                                                    className="text-gray-400 hover:text-spotify-green"
                                                 />
-                                            </Tooltip>
+                                            </HStack>
                                         </HStack>
-                                    </HStack>
-                                    <VStack align="stretch" >
-                                        {playlist.tracks.map((track) => (
-                                            <VStack key={track.id} align="stretch" >
-                                                <HStack p={2} bg={currentlyPlayingTrack === track.id ? "blue.100" : "gray.50"} rounded="md" justify="space-between">
-                                                    <HStack>
-                                                        <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
-                                                        <VStack align="start" >
-                                                            <Text fontWeight="semibold">{track.name}</Text>
-                                                            <Text fontSize="sm" color="gray.600">{track.artist}</Text>
-                                                        </VStack>
-                                                    </HStack>
-                                                    <HStack>
-                                                        <Text fontSize="sm" color="gray.600">
-                                                            {track.startTime ? formatTime(track.startTime ?? 0) : '00:00'} -
-                                                            {track.endTime ? formatTime(track.endTime ?? 0) : formatTime(track.endTime)}
-                                                        </Text>
-                                                        <Tooltip label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}>
-                                                            <IconButton
-                                                                aria-label={currentlyPlayingTrack === track.id ? "Pause track" : "Play track"}
-                                                                icon={currentlyPlayingTrack === track.id ? <Pause /> : <Play />}
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => handlePlayButton(`spotify:track:${track.trackId}`, track.id)}
-                                                            />
-                                                        </Tooltip>
-                                                        <IconButton
-                                                            aria-label="Edit track"
-                                                            icon={<Edit />}
-                                                            size="sm"
-                                                            variant="ghost"
-                                                            onClick={() => handleEditButton(track.id)}
-                                                        />
-                                                    </HStack>
+                                        {currentTrack === track.id && (
+                                            <VStack justify="space-between" mt={2}>
+                                                <HStack>
+                                                    <Text fontSize="sm" className="text-gray-400">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
                                                 </HStack>
-
-                                                {currentTrack === track.id && (
-                                                    <VStack align="stretch" p={2} bg="gray.100" rounded="md">
-                                                        <Text fontSize="sm" color="gray.600">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
-                                                        <HStack>
-                                                            <Text w="24">開始位置</Text>
-                                                            <Button size="sm" onClick={() => setLoopEndPositionA(track.id, playlist.id)}>Now</Button>
-                                                            <Text>{formatTime(track.startTime) ?? '00:00'}</Text>
-                                                        </HStack>
-                                                        <HStack>
-                                                            <Text w="24">終了位置</Text>
-                                                            <Button size="sm" onClick={() => setLoopEndPositionB(track.id, playlist.id)}>Now</Button>
-                                                            <Text>{formatTime(track.endTime) ?? formatTime(track.endTime)}</Text>
-
-                                                        </HStack>
-                                                    </VStack>
-                                                )}
+                                                <VStack>
+                                                    <Button size="xs" onClick={() => setLoopEndPositionA(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
+                                                        ループの開始位置を設定
+                                                    </Button>
+                                                </VStack>
+                                                <VStack>
+                                                    <Button size="xs" onClick={() => setLoopEndPositionB(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
+                                                        ループの終了位置を設定
+                                                    </Button>
+                                                </VStack>
                                             </VStack>
-                                        ))}
-                                    </VStack>
-                                </AccordionPanel>
-                            </AccordionItem>
-                        </Accordion>
-                    </VStack>
+                                        )}
+                                    </Box>
+                                ))}
+                            </VStack>
+                        </AccordionPanel>
+                    </AccordionItem>
                 ))}
-            </VStack>
-
-            <PlaylistEditModal
-                isOpen={isEditPlaylistModalOpen}
-                onClose={() => {
-                    setIsEditPlaylistModalOpen(false)
-                    setSelectedPlaylist({
-                        id: '',
-                        name: '',
-                        tracks: []
-                    })
-                }}
-                token={token}
-                onSavePlaylist={handleSaveEditPlaylistModal}
-                playlist={selectedPlaylist}
-            />
-        </>
+            </Accordion>
+            {selectedPlaylist && (
+                <PlaylistEditModal
+                    isOpen={isEditPlaylistModalOpen}
+                    onClose={() => {
+                        setIsEditPlaylistModalOpen(false)
+                        setSelectedPlaylist({
+                            id: '',
+                            name: '',
+                            tracks: []
+                        })
+                    }}
+                    token={token}
+                    onSavePlaylist={handleSaveEditPlaylistModal}
+                    playlist={selectedPlaylist}
+                />
+            )}
+        </VStack>
     )
 }
-

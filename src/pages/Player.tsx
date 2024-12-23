@@ -4,6 +4,8 @@ import {
     Button,
     VStack,
     Box,
+    Container,
+    Heading
 } from '@yamada-ui/react'
 import { PlaylistView } from '../components/PlaylistView'
 import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
@@ -71,13 +73,15 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
-        if (newPlaylist.id) {
+        const isExistPlaylist = playlists.some(playlist => playlist.id === newPlaylist.id);
+        if (isExistPlaylist) {
             setPlaylists(playlists.map(playlist =>
                 playlist.id === newPlaylist.id ? newPlaylist : playlist
-            ))
+            ));
         } else {
-            setPlaylists([...playlists, newPlaylist])
+            setPlaylists([...playlists, newPlaylist]);
         }
+        console.log(newPlaylist);
     }
 
     const handleDeletePlaylist = (playlistId: string) => {
@@ -105,12 +109,17 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="w-full max-w-4xl p-4 bg-white rounded-lg shadow-lg">
+        <Box className="min-h-screen bg-gray-900 text-white">
+            <Container maxW="6xl" py={8}>
                 <VStack align="stretch">
-                    <Box className="flex justify-center">
-                        <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
-                            プレイリストを作成
+                    <Box className="flex justify-between items-center">
+                        <Heading size="xl" className="text-spotify-green">Spotify LOOP</Heading>
+                        <Button
+                            colorScheme="green"
+                            onClick={() => setIsModalOpen(true)}
+                            className="bg-spotify-green hover:bg-spotify-green-dark"
+                        >
+                            Create Playlist
                         </Button>
                     </Box>
 
@@ -124,7 +133,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         onSavePlaylist={handleSavePlaylist}
                     />
 
-                    <Box>
+                    <Box className="fixed bottom-0 left-0 right-0 bg-gray-800 p-4">
                         <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} components={{
                             leftButton: (
                                 <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
@@ -136,18 +145,20 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                             setRepeat(state.repeat)
                         }} />
                     </Box>
+                    <PlaylistCreateModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        token={token}
+                        onSavePlaylist={handleSavePlaylist}
+                    />
                 </VStack>
 
-                <PlaylistCreateModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    token={token}
-                    onSavePlaylist={handleSavePlaylist}
-                />
-            </div>
-        </div>
+
+            </Container>
+        </Box>
     )
 }
 
 export default Player
+
 
