@@ -14,6 +14,7 @@ import { Edit, Trash2, Play, Pause, PlayCircle, Edit2 } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
 import { PlaylistEditModal } from './Modal/PlaylistEditModal'
+import { switchDevice, playSong } from '../utils/spotify'
 interface Track {
     id: string;
     trackId: string;
@@ -156,33 +157,10 @@ export function PlaylistView({
             }
 
             // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
-            if (!spotifyLoopDevice.is_active) {
-                await fetch('https://api.spotify.com/v1/me/player', {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        device_ids: [device_id],
-                        play: false
-                    })
-                });
-            }
+            if (!spotifyLoopDevice.is_active) await switchDevice(token, device_id)
 
             // 再生
-            await fetch('https://api.spotify.com/v1/me/player/play', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    uris: [uri],
-                    position_ms: position_ms,
-                    device_id: device_id
-                })
-            });
+            await playSong(token, device_id, [uri], position_ms)
 
             setCurrentlyPlayingTrack(id);
         }
@@ -206,33 +184,10 @@ export function PlaylistView({
         }
 
         // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
-        if (!spotifyLoopDevice.is_active) {
-            await fetch('https://api.spotify.com/v1/me/player', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    device_ids: [device_id],
-                    play: false
-                })
-            });
-        }
+        if (!spotifyLoopDevice.is_active) await switchDevice(token, device_id)
 
 
-        await fetch('https://api.spotify.com/v1/me/player/play', {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                uris: uris,
-                position_ms: initialSongPosition,
-                device_id: device_id
-            })
-        });
+        await playSong(token, device_id, uris, initialSongPosition)
 
         setCurrentlyPlayingTrack(playlist.tracks[0].id)
     }
