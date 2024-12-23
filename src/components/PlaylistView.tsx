@@ -88,6 +88,12 @@ export function PlaylistView({
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0
             const currentTrackId = state?.item?.id
+            const duration_ms = state?.item?.duration_ms ?? 0
+
+            if (ms >= duration_ms) {
+                await spotifyApi.pause(token)
+                return
+            }
 
             if (currentTrackId && toggleSwitch && trackTimes[currentTrackId]?.endTime !== null && ms > trackTimes[currentTrackId].endTime!) {
                 await spotifyApi.seek(token, trackTimes[currentTrackId].startTime ?? 0)
@@ -115,7 +121,7 @@ export function PlaylistView({
         
         // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
         if (trackTimes[trackId]?.endTime && ms >= trackTimes[trackId].endTime!) {
-            console.log('開始位置は終了位置より前に設定する必要があります')
+            console.log('開���位置は終了位置より前に設定する必要があります')
             return
         }
 
