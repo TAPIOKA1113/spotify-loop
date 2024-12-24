@@ -31,7 +31,8 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
 
     useEffect(() => {
-        fetch('http://localhost:8787/api/playlists/123', {
+        const userId = localStorage.getItem('spotify_user_id');
+        fetch(`http://localhost:8787/api/playlists/${userId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

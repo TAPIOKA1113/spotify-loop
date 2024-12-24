@@ -65,6 +65,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     }
 
     const savePlaylist = async () => {
+        const userId = localStorage.getItem('spotify_user_id');
         if (playlistName && tracks.length > 0) {
             setError(null);
 
@@ -75,7 +76,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        userId: '123',
+                        userId: userId,
                         name: playlistName,
                         tracks: tracks.map(track => ({
                             id: track.trackId,
