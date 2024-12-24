@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SpotifyPlayer from 'react-spotify-web-playback'
 import {
     Button,
@@ -11,7 +11,6 @@ import { PlaylistView } from '../components/PlaylistView'
 import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
-import { v4 as uuidv4 } from 'uuid'
 import { Playlist } from '../types/Playlist'
 
 interface PlayerProps {
@@ -23,42 +22,30 @@ interface PlayerProps {
 const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const token = access_token
 
-
-    // 初期プレイリストのデータ
-    const initialPlaylists: Playlist[] = [
-        {
-            id: '1',
-            name: 'ブレイクダウン',
-            tracks: [
-                {
-                    id: uuidv4(),
-                    trackId: '3RgE4JfthJ3tZm14Piulac',
-                    artist: 'Within Destruction',
-                    name: 'Scars',
-                    cover: 'https://i.scdn.co/image/ab67616d0000b273cc26e030a3e2a84e8b066721',
-                    startTime: 0,
-                    endTime: 221888
-                },
-                {
-                    id: uuidv4(),
-                    trackId: '6f8WPDb2IoYSKu5LgHcyrw',
-                    artist: 'Periphery',
-                    name: 'Scarlet',
-                    cover: 'https://i.scdn.co/image/ab67616d0000b2737cc1955a4381fa871eb40d2f',
-                    startTime: 0,
-                    endTime: 248800
-                }
-            ]
-        }
-    ]
-
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-    const [playlists, setPlaylists] = useState<Playlist[]>(initialPlaylists)
+    const [playlists, setPlaylists] = useState<Playlist[]>([])
     const [spotifyUrl, setSpotifyUrl] = useState<string>('')
     const [isActive, setIsActive] = useState(false)
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
+
+    useEffect(() => {
+        fetch('http://localhost:8787/api/playlists/123', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            setPlaylists(data)
+        })
+        .catch(error => {
+            console.error('Error fetching playlists:', error)
+        })
+    }, [])
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         const isExistPlaylist = playlists.some(playlist => playlist.id === newPlaylist.id);

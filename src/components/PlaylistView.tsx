@@ -66,20 +66,24 @@ export function PlaylistView({
             const ms: number = state?.progress_ms ?? 0
             const currentTrackId = state?.item?.id
             const duration_ms = state?.item?.duration_ms ?? 0
+            const devices = await spotifyApi.getDevices(token)
+            const activeDeviceId = devices.devices.find(device => device.is_active)?.id
+            const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
+            const device_id = spotifyLoopDevice?.id;
 
             if (ms >= duration_ms && currentlyPlayingTrack !== '') {
                 await spotifyApi.pause(token)
                 return
             }
 
-            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.endTime!) {
+            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.endTime! && activeDeviceId === device_id) {
                 await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime}ms`)
             }
         }, 500)
 
         return () => clearInterval(interval)
-    }, [currentlyPlayingTrack, token, toggleSwitch])
+    }, [currentlyPlayingTrack, token, toggleSwitch, deviceName])
 
     const formatTime = (ms: number) => {
         const totalSeconds = ms / 1000

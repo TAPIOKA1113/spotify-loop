@@ -35,6 +35,7 @@ export function PlaylistEditModal({ isOpen, onClose, token, onSavePlaylist, play
     const [playlistName, setPlaylistName] = useState('')
     const [newTrackId, setNewTrackId] = useState('')
 
+    // propsとして渡されたplaylistをセット
     useEffect(() => {
         if (playlist) {
             setTracks(playlist.tracks)

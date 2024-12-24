@@ -35,6 +35,8 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     const [tracks, setTracks] = useState<Track[]>([])
     const [newTrackId, setNewTrackId] = useState('')
     const [playlistName, setPlaylistName] = useState('')
+    const [error, setError] = useState<string | null>(null);
+
 
     const searchTrackName = async (trackId: string) => {
         const Track = await spotifyApi.getTrack(token, trackId)
@@ -62,19 +64,52 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
         setTracks(tracks.filter((_, i) => i !== index))
     }
 
-    const savePlaylist = () => {
+    const savePlaylist = async () => {
         if (playlistName && tracks.length > 0) {
-            const newPlaylist: Playlist = {
-                id: uuidv4(),
-                name: playlistName,
-                tracks: tracks
+            setError(null);
+
+            try {
+                const response = await fetch('http://localhost:8787/api/playlists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: '123',
+                        name: playlistName,
+                        tracks: tracks.map(track => ({
+                            id: track.trackId,
+                            name: track.name,
+                            artist: track.artist,
+                            cover: track.cover,
+                            startTime: track.startTime,
+                            endTime: track.endTime
+                        }))
+                    })
+                });
+
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'プレイリストの作成に失敗しました');
+                }
+
+                const playlist = await response.json();
+                onSavePlaylist({
+                    id: playlist.id,
+                    name: playlistName,
+                    tracks: tracks
+                });
+
+                setPlaylistName('');
+                setTracks([]);
+                onClose();
+            } catch (error) {
+                console.error('プレイリスト作成エラー:', error);
+                setError(error instanceof Error ? error.message : 'プレイリストの作成に失敗しました');
             }
-            onSavePlaylist(newPlaylist)
-            setPlaylistName('')
-            setTracks([])
-            onClose()
         }
-    }
+    };
 
     const handleReorder = (values: string[]) => {
         const newOrder = values.map(value => {
@@ -91,6 +126,11 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
             <ModalCloseButton />
             <ModalBody py={6}>
                 <VStack align="stretch" >
+                    {error && (
+                        <Text color="red.500" fontSize="sm">
+                            {error}
+                        </Text>
+                    )}
                     <Input
                         value={playlistName}
                         onChange={(e) => setPlaylistName(e.target.value)}
