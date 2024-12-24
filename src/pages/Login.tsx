@@ -8,6 +8,8 @@ function Login() {
             : 'https://spotify-loop-woad.vercel.app/' // 本番環境
 
         window.location.href = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=streaming%20user-read-email%20user-read-private%20user-library-read%20user-library-modify%20user-read-playback-state%20user-modify-playback-state`
+
+        
     }
 
     return (
