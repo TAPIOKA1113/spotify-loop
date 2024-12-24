@@ -12,25 +12,13 @@ import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
 import { v4 as uuidv4 } from 'uuid'
+import { Playlist } from '../types/Playlist'
+
 interface PlayerProps {
     access_token: string
 }
 
-interface Track {
-    id: string;
-    trackId: string;
-    artist: string;
-    name: string;
-    cover: string;
-    startTime: number;
-    endTime: number;
-}
 
-interface Playlist {
-    id: string;
-    name: string;
-    tracks: Track[];
-}
 
 const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const token = access_token
@@ -64,7 +52,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
         }
     ]
 
-    const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [playlists, setPlaylists] = useState<Playlist[]>(initialPlaylists)
     const [spotifyUrl, setSpotifyUrl] = useState<string>('')
     const [isActive, setIsActive] = useState(false)
@@ -116,7 +104,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         <Heading size="xl" className="text-spotify-green">Spotify LOOP</Heading>
                         <Button
                             colorScheme="green"
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsCreateModalOpen(true)}
                             className="bg-spotify-green hover:bg-spotify-green-dark"
                         >
                             Create Playlist
@@ -146,8 +134,8 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         }} />
                     </Box>
                     <PlaylistCreateModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
+                        isOpen={isCreateModalOpen}
+                        onClose={() => setIsCreateModalOpen(false)}
                         token={token}
                         onSavePlaylist={handleSavePlaylist}
                     />

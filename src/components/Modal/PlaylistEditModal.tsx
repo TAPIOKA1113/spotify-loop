@@ -18,21 +18,9 @@ import {
 import { Plus, Trash2 } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { v4 as uuidv4 } from 'uuid'
-interface Track {
-    id: string;
-    trackId: string;
-    artist: string;
-    name: string;
-    cover: string;
-    startTime: number;
-    endTime: number;
-}
+import { Track } from '../../types/Track'
+import { Playlist } from '../../types/Playlist'
 
-interface Playlist {
-    id: string;
-    name: string;
-    tracks: Track[];
-}
 
 interface PlaylistEditModalProps {
     isOpen: boolean;
