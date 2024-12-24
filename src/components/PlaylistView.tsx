@@ -11,10 +11,11 @@ import {
     Tooltip,
     Box
 } from '@yamada-ui/react'
-import { Edit, Play, Pause, Edit2, PlayCircle } from 'lucide-react'
+import { Edit, Play, Pause, Edit2, PlayCircle, Trash } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
 import { PlaylistEditModal } from './Modal/PlaylistEditModal'
+import { PlaylistDeleteModal } from './Modal/PlaylistDeleteModal'
 import { switchDevice, playSong } from '../utils/spotify'
 interface Track {
     id: string;
@@ -40,8 +41,7 @@ interface PlaylistViewProps {
     onUpdateTrackTimes: (playlistId: string, trackId: string, startTime: number, endTime: number) => void;
     deviceName: string;
     onSavePlaylist: (playlist: Playlist) => void;
-
-
+    onDeleteSuccess: () => void;
 }
 
 
@@ -51,12 +51,14 @@ export function PlaylistView({
     onUpdateTrackTimes,
     deviceName,
     onSavePlaylist,
+    onDeletePlaylist,
 }: PlaylistViewProps) {
 
     const [toggleSwitch, setToggleSwitch] = useState(true)
     const [currentTrack, setCurrentTrack] = useState<string>('')
     const [currentlyPlayingTrack, setCurrentlyPlayingTrack] = useState<string>('')
     const [isEditPlaylistModalOpen, setIsEditPlaylistModalOpen] = useState(false)
+    const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false)
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
 
 
@@ -206,6 +208,17 @@ export function PlaylistView({
         setIsEditPlaylistModalOpen(false);
     };
 
+    const handleDeletePlaylist = async (playlistId: string) => {
+        setIsDeletePlaylistModalOpen(true)
+        setSelectedPlaylist(playlists.find(p => p.id === playlistId)!)
+    }
+
+    const handleDeleteSuccess = () => {
+        onDeletePlaylist(selectedPlaylist?.id ?? '')
+        setIsDeletePlaylistModalOpen(false)
+        setSelectedPlaylist(null)
+    }
+
 
     return (
         <VStack align="stretch" className="bg-gray-800 rounded-lg p-4">
@@ -231,6 +244,15 @@ export function PlaylistView({
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => handleOpenEditPlaylistModal(playlist)}
+                                        />
+                                    </Tooltip>
+                                    <Tooltip label="プレイリストを削除">
+                                        <IconButton
+                                            aria-label="プレイリストを削除"
+                                            icon={<Trash />}
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => handleDeletePlaylist(playlist.id)}
                                         />
                                     </Tooltip>
                                 </HStack>
@@ -306,6 +328,16 @@ export function PlaylistView({
                     token={token}
                     onSavePlaylist={handleSaveEditPlaylistModal}
                     playlist={selectedPlaylist}
+                />
+            )}
+            {isDeletePlaylistModalOpen && (
+                <PlaylistDeleteModal
+                    isOpen={isDeletePlaylistModalOpen}
+                    onClose={() => {
+                        setIsDeletePlaylistModalOpen(false)
+                    }}
+                    playlistId={selectedPlaylist?.id ?? ''}
+                    onDeleteSuccess={handleDeleteSuccess}
                 />
             )}
         </VStack>

@@ -38,14 +38,14 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                 'Content-Type': 'application/json',
             },
         })
-        .then(response => response.json())
-        .then(data => {
-            console.log(data)
-            setPlaylists(data)
-        })
-        .catch(error => {
-            console.error('Error fetching playlists:', error)
-        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                setPlaylists(data)
+            })
+            .catch(error => {
+                console.error('Error fetching playlists:', error)
+            })
     }, [])
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
@@ -83,6 +83,24 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
         }))
     }
 
+    const handleDeleteSuccess = () => {
+        const userId = localStorage.getItem('spotify_user_id');
+        fetch(`http://localhost:8787/api/playlists/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                setPlaylists(data)
+            })
+            .catch(error => {
+                console.error('Error fetching playlists:', error)
+            })
+    }
+
 
     return (
         <Box className="min-h-screen bg-gray-900 text-white">
@@ -107,6 +125,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         onUpdateTrackTimes={handleUpdateTrackTimes}
                         deviceName={deviceName}
                         onSavePlaylist={handleSavePlaylist}
+                        onDeleteSuccess={handleDeleteSuccess}
                     />
 
                     <Box className="fixed bottom-0 left-0 right-0 bg-gray-800 p-4">
