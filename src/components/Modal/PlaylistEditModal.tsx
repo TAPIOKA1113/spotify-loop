@@ -10,7 +10,6 @@ import {
     VStack,
     HStack,
     IconButton,
-    Text,
     Image,
     Reorder,
     ReorderItem,
@@ -91,6 +90,14 @@ export function PlaylistEditModal({ isOpen, onClose, token, onSavePlaylist, play
         setTracks(newOrder)
     }
 
+    const setTrackName = (value: string) => {
+        setTracks(tracks.map(track => ({ ...track, name: value })))
+    }
+
+    const setArtistName = (value: string) => {
+        setTracks(tracks.map(track => ({ ...track, artist: value })))
+    }
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay />
@@ -134,9 +141,10 @@ export function PlaylistEditModal({ isOpen, onClose, token, onSavePlaylist, play
                                     justifyContent="space-between"
                                 >
                                     <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
-                                    <Text flex={1} ml={3}>
-                                        {track.name} - {track.artist}
-                                    </Text>
+                                    <VStack>
+                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value)} />
+                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value)} />
+                                    </VStack>
                                     <IconButton
                                         aria-label="Remove track"
                                         icon={<Trash2 />}

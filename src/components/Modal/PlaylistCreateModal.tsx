@@ -117,8 +117,11 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     }
 
     const setTrackName = (value: string) => {
-        const [name, artist] = value.split(' - ')
-        setTracks(tracks.map(track => ({ ...track, name: name, artist: artist })))
+        setTracks(tracks.map(track => ({ ...track, name: value })))
+    }
+
+    const setArtistName = (value: string) => {
+        setTracks(tracks.map(track => ({ ...track, artist: value })))
     }
 
     return (
@@ -169,7 +172,10 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
                                     justifyContent="space-between"
                                 >
                                     <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
-                                    <Input flex={1} ml={3} value={track.name + ' - ' + track.artist} onChange={(e) => setTrackName(e.target.value)} />
+                                    <VStack>
+                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value)} />
+                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value)} />
+                                    </VStack>
                                     <IconButton
                                         aria-label="Remove track"
                                         icon={<Trash2 />}
