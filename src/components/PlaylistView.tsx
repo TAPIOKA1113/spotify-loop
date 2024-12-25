@@ -9,7 +9,8 @@ import {
     IconButton,
     Button,
     Tooltip,
-    Box
+    Box,
+    Slide
 } from '@yamada-ui/react'
 import { Edit, Play, Pause, Edit2, PlayCircle, Trash } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
@@ -60,6 +61,9 @@ export function PlaylistView({
     const [isEditPlaylistModalOpen, setIsEditPlaylistModalOpen] = useState(false)
     const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false)
     const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null)
+    const [showNotification, setShowNotification] = useState(false)
+    const [notificationType, setNotificationType] = useState<'success' | 'error'>('success')
+    const [notificationMessage, setNotificationMessage] = useState('')
 
 
     useEffect(() => {
@@ -108,13 +112,20 @@ export function PlaylistView({
 
         // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
         if (currentEndTime && ms >= currentEndTime) {
-            console.log('開始位置は終了位置より前に設定する必要があります')
+            setNotificationType('error')
+            setNotificationMessage('開始位置は終了位置より前に設定する必要があります')
+            setShowNotification(true)
+            setTimeout(() => setShowNotification(false), 3000)
             return
         }
 
         setCurrentlyPlayingTrack(id)
         console.log(`Aループの終了位置を設定しました: ${ms}ms`)
         onUpdateTrackTimes(playlistId, id, ms, currentEndTime)
+        setNotificationType('success')
+        setNotificationMessage('ループ位置を更新しました')
+        setShowNotification(true)
+        setTimeout(() => setShowNotification(false), 3000) // 3秒後に非表示
     }
 
     // 終了位置を設定
@@ -122,19 +133,24 @@ export function PlaylistView({
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
 
-        // 現在のトラックのstartTimeを取得
         const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
         const currentStartTime = currentTrack?.startTime ?? 0
 
-        // Aの時間が設定されている場合、Bの時間がAより前にならないようにチェック
         if (currentStartTime && ms <= currentStartTime) {
-            console.log('終了位置は開始位置より後に設定する必要があります')
+            setNotificationType('error')
+            setNotificationMessage('終了位置は開始位置より後に設定する必要があります')
+            setShowNotification(true)
+            setTimeout(() => setShowNotification(false), 3000)
             return
         }
 
         setCurrentlyPlayingTrack(id)
         console.log(`Bループの終了位置を設定しました: ${ms}ms`)
         onUpdateTrackTimes(playlistId, id, currentStartTime, ms)
+        setNotificationType('success')
+        setNotificationMessage('ループ位置を更新しました')
+        setShowNotification(true)
+        setTimeout(() => setShowNotification(false), 3000)
     }
 
 
@@ -339,6 +355,24 @@ export function PlaylistView({
                     playlistId={selectedPlaylist?.id ?? ''}
                     onDeleteSuccess={handleDeleteSuccess}
                 />
+            )}
+            {showNotification && (
+                <Slide
+                    isOpen={showNotification}
+                    style={{ zIndex: 10 }}
+                    placement="bottom"
+                >
+                    <Box
+                        p={4}
+                        bg={notificationType === 'success' ? "green.500" : "red.500"}
+                        rounded="md"
+                        shadow="md"
+                        color="white"
+                        textAlign="center"
+                    >
+                        {notificationMessage}
+                    </Box>
+                </Slide>
             )}
         </VStack>
     )
