@@ -116,6 +116,11 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
         setTracks(newOrder)
     }
 
+    const setTrackName = (value: string) => {
+        const [name, artist] = value.split(' - ')
+        setTracks(tracks.map(track => ({ ...track, name: name, artist: artist })))
+    }
+
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
             <ModalOverlay />
@@ -164,9 +169,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
                                     justifyContent="space-between"
                                 >
                                     <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
-                                    <Text flex={1} ml={3}>
-                                        {track.name} - {track.artist}
-                                    </Text>
+                                    <Input flex={1} ml={3} value={track.name + ' - ' + track.artist} onChange={(e) => setTrackName(e.target.value)} />
                                     <IconButton
                                         aria-label="Remove track"
                                         icon={<Trash2 />}
