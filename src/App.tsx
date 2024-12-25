@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { refreshToken } from './utils/spotify';
+import { apiClient } from './utils/api';
 
 import Login from './pages/Login';
 import Player from './pages/Player';
@@ -50,14 +51,10 @@ function App() {
         }).then(res => res.json());
 
         // ユーザー登録とデータの保存
-        await fetch('http://localhost:8787/api/user/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            spotify_id: userData.id,
-            spotify_display_name: userData.display_name,
-            spotify_email: userData.email,
-          })
+        await apiClient.post('/api/user/register', {
+          spotify_id: userData.id,
+          spotify_display_name: userData.display_name,
+          spotify_email: userData.email,
         });
 
         // ユーザー情報をローカルストレージに保存
@@ -71,7 +68,7 @@ function App() {
     };
 
     validateAndFetchUser();
-  }, [token]); 
+  }, [token]);
 
   return (
     <Router>

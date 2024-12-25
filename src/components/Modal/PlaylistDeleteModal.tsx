@@ -9,7 +9,7 @@ import {
     VStack,
     Text,
 } from '@yamada-ui/react'
-
+import { apiClient } from '../../utils/api'
 
 interface PlaylistDeleteModalProps {
     isOpen: boolean;
@@ -22,12 +22,7 @@ export function PlaylistDeleteModal({ isOpen, onClose, playlistId, onDeleteSucce
 
     const handleDeletePlaylist = async () => {
         try {
-            const res = await fetch(`http://localhost:8787/api/playlists/${playlistId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })
+            const res = await apiClient.delete(`/api/playlists/${playlistId}`)
             if (res.ok) {
                 onDeleteSuccess()
             }

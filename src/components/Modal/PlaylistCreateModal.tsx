@@ -20,6 +20,7 @@ import { spotifyApi } from 'react-spotify-web-playback'
 import { v4 as uuidv4 } from 'uuid'
 import { Track } from '../../types/Track'
 import { Playlist } from '../../types/Playlist'
+import { apiClient } from '../../utils/api'
 
 
 
@@ -65,28 +66,23 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     }
 
     const savePlaylist = async () => {
-        const userId = localStorage.getItem('spotify_user_id');
+
         if (playlistName && tracks.length > 0) {
             setError(null);
 
             try {
-                const response = await fetch('http://localhost:8787/api/playlists', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        userId: userId,
-                        name: playlistName,
-                        tracks: tracks.map(track => ({
-                            id: track.trackId,
-                            name: track.name,
-                            artist: track.artist,
-                            cover: track.cover,
-                            startTime: track.startTime,
-                            endTime: track.endTime
-                        }))
-                    })
+                const userId = localStorage.getItem('spotify_user_id');
+                const response = await apiClient.post('/api/playlists', {
+                    userId: userId,
+                    name: playlistName,
+                    tracks: tracks.map(track => ({
+                        id: track.trackId,
+                        name: track.name,
+                        artist: track.artist,
+                        cover: track.cover,
+                        startTime: track.startTime,
+                        endTime: track.endTime
+                    }))
                 });
 
 

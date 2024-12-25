@@ -12,7 +12,7 @@ import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
 import { Playlist } from '../types/Playlist'
-
+import { apiClient } from '../utils/api'
 interface PlayerProps {
     access_token: string
 }
@@ -32,12 +32,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
     useEffect(() => {
         const userId = localStorage.getItem('spotify_user_id');
-        fetch(`http://localhost:8787/api/playlists/${userId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+        apiClient.get(`/api/playlists/${userId}`)
             .then(response => response.json())
             .then(data => {
                 console.log(data)
@@ -85,12 +80,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
     const handleDeleteSuccess = () => {
         const userId = localStorage.getItem('spotify_user_id');
-        fetch(`http://localhost:8787/api/playlists/${userId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
+        apiClient.get(`/api/playlists/${userId}`)
             .then(response => response.json())
             .then(data => {
                 console.log(data)
