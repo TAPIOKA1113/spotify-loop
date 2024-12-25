@@ -17,6 +17,15 @@ export const apiClient = {
             body: JSON.stringify(body),
         }),
     
+    put: (path: string, body: any) => 
+        fetch(`${API_URL}${path}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        }),
+
     delete: (path: string) => 
         fetch(`${API_URL}${path}`, {
             method: 'DELETE',

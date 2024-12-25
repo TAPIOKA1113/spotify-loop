@@ -60,22 +60,35 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     }
 
 
-    const handleUpdateTrackTimes = (playlistId: string, trackId: string, startTime: number, endTime: number) => {
+    const handleUpdateTrackTimes = async (playlistId: string, trackId: string, startTime: number, endTime: number) => {
         setSpotifyUrl(`spotify:track:${trackId}`)
-        setPlaylists(playlists.map(playlist => {
-            if (playlist.id === playlistId) {
-                return {
-                    ...playlist,
-                    tracks: playlist.tracks.map(track => {
-                        if (track.id === trackId) {
-                            return { ...track, startTime, endTime }
-                        }
-                        return track
-                    })
+
+        const response = await apiClient.put(`/api/playlists/${playlistId}/${trackId}`, {
+            startTime,
+            endTime
+        })
+
+        if (response.ok) {
+
+            setPlaylists(playlists.map(playlist => {
+                if (playlist.id === playlistId) {
+                    return {
+                        ...playlist,
+                        tracks: playlist.tracks.map(track => {
+                            if (track.id === trackId) {
+                                return { ...track, startTime, endTime }
+                            }
+                            return track
+                        })
+                    }
                 }
-            }
-            return playlist
-        }))
+                return playlist
+            }))
+        }
+        else {
+            console.error('Failed to update track times')
+        }
+
     }
 
     const handleDeleteSuccess = () => {
