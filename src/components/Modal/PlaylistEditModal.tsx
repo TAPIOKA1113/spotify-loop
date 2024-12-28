@@ -92,12 +92,12 @@ export function PlaylistEditModal({ isOpen, onClose, token, onSavePlaylist, play
         setTracks(newOrder)
     }
 
-    const setTrackName = (value: string) => {
-        setTracks(tracks.map(track => ({ ...track, name: value })))
+    const setTrackName = (value: string, trackId: string) => {
+        setTracks(tracks.map(track => track.id === trackId ? { ...track, name: value } : track))
     }
 
-    const setArtistName = (value: string) => {
-        setTracks(tracks.map(track => ({ ...track, artist: value })))
+    const setArtistName = (value: string, trackId: string) => {
+        setTracks(tracks.map(track => track.id === trackId ? { ...track, artist: value } : track))
     }
 
     return (
@@ -144,8 +144,8 @@ export function PlaylistEditModal({ isOpen, onClose, token, onSavePlaylist, play
                                 >
                                     <Image src={track.cover_url} alt={track.name} width={50} height={50} rounded="md" />
                                     <VStack>
-                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value)} />
-                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value)} />
+                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value, track.id)} />
+                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value, track.id)} />
                                     </VStack>
                                     <IconButton
                                         aria-label="Remove track"
