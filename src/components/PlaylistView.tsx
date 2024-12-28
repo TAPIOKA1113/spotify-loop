@@ -18,21 +18,8 @@ import { useState, useEffect } from 'react'
 import { PlaylistEditModal } from './Modal/PlaylistEditModal'
 import { PlaylistDeleteModal } from './Modal/PlaylistDeleteModal'
 import { switchDevice, playSong } from '../utils/spotify'
-interface Track {
-    id: string;
-    trackId: string;
-    artist: string;
-    name: string;
-    cover: string;
-    startTime: number;
-    endTime: number;
-}
-
-interface Playlist {
-    id: string;
-    name: string;
-    tracks: Track[];
-}
+import { Playlist } from '../types/Playlist'
+import { apiClient } from '../utils/api'
 
 interface PlaylistViewProps {
     token: string;
@@ -65,6 +52,15 @@ export function PlaylistView({
     const [notificationType, setNotificationType] = useState<'success' | 'error'>('success')
     const [notificationMessage, setNotificationMessage] = useState('')
 
+    const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
+        const response = await apiClient.put(`/api/playlists/${playlistId}`, {
+            updatedPlaylist
+        })
+        console.log(updatedPlaylist)
+        console.log(response)
+        return response
+    }
+
 
     useEffect(() => {
         const interval = setInterval(async () => {
@@ -82,9 +78,9 @@ export function PlaylistView({
                 return
             }
 
-            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.endTime! && activeDeviceId === device_id) {
-                await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime ?? 0)
-                console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.startTime}ms`)
+            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id) {
+                await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time ?? 0)
+                console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time}ms`)
             }
         }, 500)
 
@@ -108,9 +104,8 @@ export function PlaylistView({
 
         // 現在のトラックのendTimeを取得
         const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
-        const currentEndTime = currentTrack?.endTime ?? duration_ms  // endTimeが未設定の場合は曲の長さを使用
+        const currentEndTime = currentTrack?.end_time ?? duration_ms
 
-        // Bの時間が設定されている場合、Aの時間がBより後にならないようにチェック
         if (currentEndTime && ms >= currentEndTime) {
             setNotificationType('error')
             setNotificationMessage('開始位置は終了位置より前に設定する必要があります')
@@ -119,13 +114,33 @@ export function PlaylistView({
             return
         }
 
-        setCurrentlyPlayingTrack(id)
-        console.log(`Aループの終了位置を設定しました: ${ms}ms`)
+        // ローカルステートの更新
         onUpdateTrackTimes(playlistId, id, ms, currentEndTime)
-        setNotificationType('success')
-        setNotificationMessage('ループ位置を更新しました')
+
+        // APIを呼び出してサーバー側も更新
+        try {
+            const playlist = playlists.find(p => p.id === playlistId)
+            if (!playlist) return
+
+            const updatedPlaylist = {
+                ...playlist,
+                tracks: playlist.tracks.map(t => 
+                    t.id === id ? { ...t, start_time: ms } : t
+                )
+            }
+
+            await updateTracksSendApi(playlistId, updatedPlaylist)
+
+            setNotificationType('success')
+            setNotificationMessage('ループ位置を更新しました')
+        } catch (error) {
+            setNotificationType('error')
+            setNotificationMessage('ループ位置の保存に失敗しました')
+        }
+
         setShowNotification(true)
-        setTimeout(() => setShowNotification(false), 3000) // 3秒後に非表示
+        setTimeout(() => setShowNotification(false), 3000)
+        setCurrentlyPlayingTrack(id)
     }
 
     // 終了位置を設定
@@ -134,7 +149,7 @@ export function PlaylistView({
         const ms: number = state?.progress_ms ?? 0
 
         const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
-        const currentStartTime = currentTrack?.startTime ?? 0
+        const currentStartTime = currentTrack?.start_time ?? 0
 
         if (currentStartTime && ms <= currentStartTime) {
             setNotificationType('error')
@@ -144,13 +159,29 @@ export function PlaylistView({
             return
         }
 
-        setCurrentlyPlayingTrack(id)
-        console.log(`Bループの終了位置を設定しました: ${ms}ms`)
+        // ローカルステートの更新
         onUpdateTrackTimes(playlistId, id, currentStartTime, ms)
-        setNotificationType('success')
-        setNotificationMessage('ループ位置を更新しました')
-        setShowNotification(true)
-        setTimeout(() => setShowNotification(false), 3000)
+
+        // APIを呼び出してサーバー側も更新
+        try {
+            const playlist = playlists.find(p => p.id === playlistId)
+            if (!playlist) return
+
+            const updatedPlaylist = {
+                ...playlist,
+                tracks: playlist.tracks.map(t => t.id === id ? { ...t, endTime: ms } : t)
+            }
+
+            await updateTracksSendApi(playlistId, updatedPlaylist)
+
+            setNotificationType('success')
+            setNotificationMessage('ループ位置を更新しました')
+        } catch (error) {
+            setNotificationType('error')
+            setNotificationMessage('ループ位置の保存に失敗しました')
+        }
+
+
     }
 
 
@@ -168,7 +199,7 @@ export function PlaylistView({
             await spotifyApi.pause(token);
             setCurrentlyPlayingTrack('');
         } else {
-            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.startTime ?? 0;
+            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.start_time ?? 0;
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
@@ -189,6 +220,7 @@ export function PlaylistView({
     };
 
     const handlePlayFromBeginning = async (playlist: Playlist) => {
+        console.log(playlist)
         const devices = await spotifyApi.getDevices(token);
         const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
         const device_id = spotifyLoopDevice?.id;
@@ -197,8 +229,8 @@ export function PlaylistView({
                 ...track
             }
         })
-        const uris = playlistTracks.map(track => `spotify:track:${track.trackId}`)
-        const initialSongPosition = playlistTracks[0].startTime ?? 0
+        const uris = playlistTracks.map(track => `spotify:track:${track.spotify_track_id}`)
+        const initialSongPosition = playlistTracks[0].start_time ?? 0
 
         if (!device_id) {
             console.error('spotify-loopデバイスが見つかりません');
@@ -219,9 +251,29 @@ export function PlaylistView({
         setIsEditPlaylistModalOpen(true);
     };
 
-    const handleSaveEditPlaylistModal = (updatedPlaylist: Playlist) => {
-        onSavePlaylist(updatedPlaylist)
-        setIsEditPlaylistModalOpen(false);
+    const handleSaveEditPlaylistModal = async (updatedPlaylist: Playlist) => {
+        try {
+            const response = await updateTracksSendApi(updatedPlaylist.id, updatedPlaylist) 
+
+            if (!response.ok) {
+                throw new Error('プレイリストの更新に失敗しました');
+            }
+
+            onSavePlaylist(updatedPlaylist);
+            setIsEditPlaylistModalOpen(false);
+            
+            // 成功通知を表示
+            setNotificationType('success');
+            setNotificationMessage('プレイリストを更新しました');
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 3000);
+        } catch (error) {
+            // エラー通知を表示
+            setNotificationType('error');
+            setNotificationMessage('プレイリストの更新に失敗しました');
+            setShowNotification(true);
+            setTimeout(() => setShowNotification(false), 3000);
+        }
     };
 
     const handleDeletePlaylist = async (playlistId: string) => {
@@ -274,57 +326,60 @@ export function PlaylistView({
                                 </HStack>
                             </HStack>
                             <VStack align="stretch" >
-                                {playlist.tracks.map((track) => (
-                                    <Box key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
-                                        <HStack justify="space-between">
-                                            <HStack >
-                                                <Image src={track.cover} alt={track.name} width={50} height={50} className="rounded-md" />
-                                                <VStack align="start" >
-                                                    <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
-                                                    <Text fontSize="xs" className="text-gray-400">{track.artist}</Text>
-                                                </VStack>
-                                            </HStack>
-                                            <HStack >
-                                                <Text fontSize="xs" className="text-gray-400">
-                                                    {formatTime(track.startTime)} - {formatTime(track.endTime)}
-                                                </Text>
-                                                <IconButton
-                                                    aria-label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}
-                                                    icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => handlePlayButton(`spotify:track:${track.trackId}`, track.id)}
-                                                    className="text-gray-400 hover:text-spotify-green"
-                                                />
-                                                <IconButton
-                                                    aria-label="Edit"
-                                                    icon={<Edit className="w-4 h-4" />}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    onClick={() => handleEditButton(track.id)}
-                                                    className="text-gray-400 hover:text-spotify-green"
-                                                />
-                                            </HStack>
-                                        </HStack>
-                                        {currentTrack === track.id && (
-                                            <VStack justify="space-between" mt={2}>
+                                {playlist.tracks
+                                    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+                                    .map((track) => (
+                                        <Box key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
+                                            <HStack justify="space-between">
                                                 <HStack>
-                                                    <Text fontSize="sm" className="text-gray-400">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
+                                                    <Text fontSize="xs" className="text-gray-400 w-6">{track.position}</Text>
+                                                    <Image src={track.cover_url} alt={track.name} width={50} height={50} className="rounded-md" />
+                                                    <VStack align="start" >
+                                                        <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
+                                                        <Text fontSize="xs" className="text-gray-400">{track.artist}</Text>
+                                                    </VStack>
                                                 </HStack>
-                                                <VStack>
-                                                    <Button size="xs" onClick={() => setLoopEndPositionA(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
-                                                        ループの開始位置を設定
-                                                    </Button>
+                                                <HStack >
+                                                    <Text fontSize="xs" className="text-gray-400">
+                                                        {formatTime(track.start_time)} - {formatTime(track.end_time)}
+                                                    </Text>
+                                                    <IconButton
+                                                        aria-label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}
+                                                        icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)}
+                                                        className="text-gray-400 hover:text-spotify-green"
+                                                    />
+                                                    <IconButton
+                                                        aria-label="Edit"
+                                                        icon={<Edit className="w-4 h-4" />}
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleEditButton(track.id)}
+                                                        className="text-gray-400 hover:text-spotify-green"
+                                                    />
+                                                </HStack>
+                                            </HStack>
+                                            {currentTrack === track.id && (
+                                                <VStack justify="space-between" mt={2}>
+                                                    <HStack>
+                                                        <Text fontSize="sm" className="text-gray-400">ループ位置の編集画面を開いているときは、ループは一時中断されます。</Text>
+                                                    </HStack>
+                                                    <VStack>
+                                                        <Button size="xs" onClick={() => setLoopEndPositionA(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
+                                                            ループの開始位置を設定
+                                                        </Button>
+                                                    </VStack>
+                                                    <VStack>
+                                                        <Button size="xs" onClick={() => setLoopEndPositionB(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
+                                                            ループの終了位置を設定
+                                                        </Button>
+                                                    </VStack>
                                                 </VStack>
-                                                <VStack>
-                                                    <Button size="xs" onClick={() => setLoopEndPositionB(track.id, playlist.id)} className="bg-spotify-green hover:bg-spotify-green-dark text-white">
-                                                        ループの終了位置を設定
-                                                    </Button>
-                                                </VStack>
-                                            </VStack>
-                                        )}
-                                    </Box>
-                                ))}
+                                            )}
+                                        </Box>
+                                    ))}
                             </VStack>
                         </AccordionPanel>
                     </AccordionItem>

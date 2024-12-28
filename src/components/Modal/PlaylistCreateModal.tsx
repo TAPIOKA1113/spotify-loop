@@ -23,8 +23,6 @@ import { Playlist } from '../../types/Playlist'
 import { apiClient } from '../../utils/api'
 
 
-
-
 interface PlaylistCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -50,12 +48,13 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
             const trackId = newTrackId.split(':').pop() || newTrackId
             setTracks([...tracks, {
                 id: uuidv4(),
-                trackId: trackId,
+                spotify_track_id: trackId,
                 name: Track.name,
                 artist: Track.artists[0].name,
-                cover: Track.album.images[0].url,
-                startTime: 0,
-                endTime: Track.duration_ms || 0
+                cover_url: Track.album.images[0].url,
+                start_time: 0,
+                end_time: Track.duration_ms || 0,
+                position: tracks.length
             }])
             setNewTrackId('')
         }
@@ -72,17 +71,14 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
 
             try {
                 const userId = localStorage.getItem('spotify_user_id');
+                const playlist: Playlist = {
+                    id: uuidv4(),
+                    name: playlistName,
+                    tracks: tracks
+                }
                 const response = await apiClient.post('/api/playlists', {
                     userId: userId,
-                    name: playlistName,
-                    tracks: tracks.map(track => ({
-                        id: track.trackId,
-                        name: track.name,
-                        artist: track.artist,
-                        cover: track.cover,
-                        startTime: track.startTime,
-                        endTime: track.endTime
-                    }))
+                    playlist: playlist
                 });
 
 
@@ -91,12 +87,8 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
                     throw new Error(errorData.message || 'プレイリストの作成に失敗しました');
                 }
 
-                const playlist = await response.json();
-                onSavePlaylist({
-                    id: playlist.id,
-                    name: playlistName,
-                    tracks: tracks
-                });
+                const responseData = await response.json();
+                onSavePlaylist(responseData.playlist);
 
                 setPlaylistName('');
                 setTracks([]);
@@ -109,11 +101,13 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     };
 
     const handleReorder = (values: string[]) => {
-        const newOrder = values.map(value => {
+        const newOrder = values.map((value, index) => {
             const id = value
-            return tracks.find(track => track.id === id)!
+            const track = tracks.find(track => track.id === id)!
+            return { ...track, position: index }
         })
         setTracks(newOrder)
+        console.log(tracks)
     }
 
     const setTrackName = (value: string) => {
@@ -171,7 +165,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
                                     alignItems="center"
                                     justifyContent="space-between"
                                 >
-                                    <Image src={track.cover} alt={track.name} width={50} height={50} rounded="md" />
+                                    <Image src={track.cover_url} alt={track.name} width={50} height={50} rounded="md" />
                                     <VStack>
                                         <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value)} />
                                         <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value)} />
