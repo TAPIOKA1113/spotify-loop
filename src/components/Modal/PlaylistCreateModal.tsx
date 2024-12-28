@@ -27,10 +27,9 @@ interface PlaylistCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
     token: string;
-    onSavePlaylist: (playlist: Playlist) => void;
 }
 
-export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: PlaylistCreateModalProps) {
+export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateModalProps) {
     const [tracks, setTracks] = useState<Track[]>([])
     const [newTrackId, setNewTrackId] = useState('')
     const [playlistName, setPlaylistName] = useState('')
@@ -65,30 +64,29 @@ export function PlaylistCreateModal({ isOpen, onClose, token, onSavePlaylist }: 
     }
 
     const savePlaylist = async () => {
-
         if (playlistName && tracks.length > 0) {
             setError(null);
 
             try {
                 const userId = localStorage.getItem('spotify_user_id');
+                
                 const playlist: Playlist = {
                     id: uuidv4(),
                     name: playlistName,
                     tracks: tracks
                 }
+                console.log(playlist)
                 const response = await apiClient.post('/api/playlists', {
                     userId: userId,
                     playlist: playlist
                 });
 
+                const responseData = await response.json();
+                console.log(responseData)
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'プレイリストの作成に失敗しました');
+                    throw new Error(responseData.message || 'プレイリストの作成に失敗しました');
                 }
-
-                const responseData = await response.json();
-                onSavePlaylist(responseData.playlist);
 
                 setPlaylistName('');
                 setTracks([]);

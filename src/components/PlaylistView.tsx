@@ -26,7 +26,7 @@ interface PlaylistViewProps {
     playlists: Playlist[];
     spotifyUrl: string;
     onDeletePlaylist: (playlistId: string) => void;
-    onUpdateTrackTimes: (playlistId: string, trackId: string, startTime: number, endTime: number) => void;
+    onUpdateTrackTimes: (playlistId: string, trackId: string, start_time: number, end_time: number) => void;
     deviceName: string;
     onSavePlaylist: (playlist: Playlist) => void;
     onDeleteSuccess: () => void;
@@ -53,7 +53,8 @@ export function PlaylistView({
     const [notificationMessage, setNotificationMessage] = useState('')
 
     const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
-        const response = await apiClient.put(`/api/playlists/${playlistId}`, {
+        const userId = localStorage.getItem('spotify_user_id')
+        const response = await apiClient.put(`/api/playlists/${userId}/${playlistId}`, {
             updatedPlaylist
         })
         console.log(updatedPlaylist)
@@ -124,10 +125,11 @@ export function PlaylistView({
 
             const updatedPlaylist = {
                 ...playlist,
-                tracks: playlist.tracks.map(t => 
+                tracks: playlist.tracks.map(t =>
                     t.id === id ? { ...t, start_time: ms } : t
                 )
             }
+
 
             await updateTracksSendApi(playlistId, updatedPlaylist)
 
@@ -169,19 +171,21 @@ export function PlaylistView({
 
             const updatedPlaylist = {
                 ...playlist,
-                tracks: playlist.tracks.map(t => t.id === id ? { ...t, endTime: ms } : t)
+                tracks: playlist.tracks.map(t => t.id === id ? { ...t, end_time: ms } : t)
             }
-
+            console.log(updatedPlaylist)
             await updateTracksSendApi(playlistId, updatedPlaylist)
 
             setNotificationType('success')
             setNotificationMessage('ループ位置を更新しました')
+            setShowNotification(true)
+            setTimeout(() => setShowNotification(false), 3000)
         } catch (error) {
             setNotificationType('error')
             setNotificationMessage('ループ位置の保存に失敗しました')
+            setShowNotification(true)
+            setTimeout(() => setShowNotification(false), 3000)
         }
-
-
     }
 
 
@@ -253,7 +257,7 @@ export function PlaylistView({
 
     const handleSaveEditPlaylistModal = async (updatedPlaylist: Playlist) => {
         try {
-            const response = await updateTracksSendApi(updatedPlaylist.id, updatedPlaylist) 
+            const response = await updateTracksSendApi(updatedPlaylist.id, updatedPlaylist)
 
             if (!response.ok) {
                 throw new Error('プレイリストの更新に失敗しました');
@@ -261,7 +265,7 @@ export function PlaylistView({
 
             onSavePlaylist(updatedPlaylist);
             setIsEditPlaylistModalOpen(false);
-            
+
             // 成功通知を表示
             setNotificationType('success');
             setNotificationMessage('プレイリストを更新しました');

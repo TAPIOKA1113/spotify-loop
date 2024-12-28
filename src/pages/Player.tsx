@@ -30,17 +30,19 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
 
+
     useEffect(() => {
         const userId = localStorage.getItem('spotify_user_id');
         apiClient.get(`/api/playlists/${userId}`)
             .then(response => response.json())
             .then(data => {
+                console.log(data)
                 setPlaylists(data)
             })
             .catch(error => {
                 console.error('Error fetching playlists:', error);
             });
-    }, []);
+    }, [isCreateModalOpen]);
 
     const handleSavePlaylist = (newPlaylist: Playlist) => {
         const isExistPlaylist = playlists.some(playlist => playlist.id === newPlaylist.id);
@@ -59,7 +61,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     }
 
 
-    const handleUpdateTrackTimes = async (playlistId: string, trackId: string, startTime: number, endTime: number) => {
+    const handleUpdateTrackTimes = async (playlistId: string, trackId: string, start_time: number, end_time: number) => {
         setSpotifyUrl(`spotify:track:${trackId}`)
 
         setPlaylists(playlists.map(playlist => {
@@ -68,7 +70,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     ...playlist,
                     tracks: playlist.tracks.map(track => {
                         if (track.id === trackId) {
-                            return { ...track, startTime, endTime }
+                            return { ...track, start_time, end_time }
                         }
                         return track
                     })
@@ -79,71 +81,70 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     }
 
     const handleDeleteSuccess = () => {
-            const userId = localStorage.getItem('spotify_user_id');
-            apiClient.get(`/api/playlists/${userId}`)
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data)
-                    setPlaylists(data)
-                })
-                .catch(error => {
-                    console.error('Error fetching playlists:', error)
-                })
-        }
-
-
-        return (
-            <Box className="min-h-screen bg-gray-900 text-white">
-                <Container maxW="6xl" py={8}>
-                    <VStack align="stretch">
-                        <Box className="flex justify-between items-center">
-                            <Heading size="xl" className="text-spotify-green">Spotify LOOP</Heading>
-                            <Button
-                                colorScheme="green"
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="bg-spotify-green hover:bg-spotify-green-dark"
-                            >
-                                Create Playlist
-                            </Button>
-                        </Box>
-
-                        <PlaylistView
-                            token={token}
-                            playlists={playlists}
-                            spotifyUrl={spotifyUrl}
-                            onDeletePlaylist={handleDeletePlaylist}
-                            onUpdateTrackTimes={handleUpdateTrackTimes}
-                            deviceName={deviceName}
-                            onSavePlaylist={handleSavePlaylist}
-                            onDeleteSuccess={handleDeleteSuccess}
-                        />
-
-                        <Box className="fixed bottom-0 left-0 right-0 bg-gray-800 p-4">
-                            <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} components={{
-                                leftButton: (
-                                    <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
-                                ),
-                                rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />,
-                            }} callback={state => {
-                                setIsActive(state.isActive)
-                                setShuffle(state.shuffle)
-                                setRepeat(state.repeat)
-                            }} />
-                        </Box>
-                        <PlaylistCreateModal
-                            isOpen={isCreateModalOpen}
-                            onClose={() => setIsCreateModalOpen(false)}
-                            token={token}
-                            onSavePlaylist={handleSavePlaylist}
-                        />
-                    </VStack>
-
-
-                </Container>
-            </Box>
-        )
+        const userId = localStorage.getItem('spotify_user_id');
+        apiClient.get(`/api/playlists/${userId}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+                setPlaylists(data)
+            })
+            .catch(error => {
+                console.error('Error fetching playlists:', error)
+            })
     }
 
-    export default Player
+
+    return (
+        <Box className="min-h-screen bg-gray-900 text-white">
+            <Container maxW="6xl" py={8}>
+                <VStack align="stretch">
+                    <Box className="flex justify-between items-center">
+                        <Heading size="xl" className="text-spotify-green">Spotify LOOP</Heading>
+                        <Button
+                            colorScheme="green"
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="bg-spotify-green hover:bg-spotify-green-dark"
+                        >
+                            Create Playlist
+                        </Button>
+                    </Box>
+
+                    <PlaylistView
+                        token={token}
+                        playlists={playlists}
+                        spotifyUrl={spotifyUrl}
+                        onDeletePlaylist={handleDeletePlaylist}
+                        onUpdateTrackTimes={handleUpdateTrackTimes}
+                        deviceName={deviceName}
+                        onSavePlaylist={handleSavePlaylist}
+                        onDeleteSuccess={handleDeleteSuccess}
+                    />
+
+                    <Box className="fixed bottom-0 left-0 right-0 bg-gray-800 p-4">
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} components={{
+                            leftButton: (
+                                <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
+                            ),
+                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />,
+                        }} callback={state => {
+                            setIsActive(state.isActive)
+                            setShuffle(state.shuffle)
+                            setRepeat(state.repeat)
+                        }} />
+                    </Box>
+                    <PlaylistCreateModal
+                        isOpen={isCreateModalOpen}
+                        onClose={() => setIsCreateModalOpen(false)}
+                        token={token}
+                    />
+                </VStack>
+
+
+            </Container>
+        </Box>
+    )
+}
+
+export default Player
 
 
