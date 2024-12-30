@@ -73,22 +73,26 @@ export function PlaylistView({
     useEffect(() => {
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
-            const ms: number = state?.progress_ms ?? 0
+            const ms: number = state?.progress_ms ?? 0 // 再生位置
             const currentTrackId = state?.item?.id
-            // const duration_ms = state?.item?.duration_ms ?? 0 
+            const duration_ms = state?.item?.duration_ms ?? 0 // 曲の長さ
             const devices = await spotifyApi.getDevices(token)
             const activeDeviceId = devices.devices.find(device => device.is_active)?.id
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
 
-            const currentPlaylist = playlists.find(p =>
-                p.tracks.some(t => t.id === currentlyPlayingTrack)
-            );
-            const currentTrackIndex = currentPlaylist?.tracks.findIndex(t =>
-                t.id === currentlyPlayingTrack
-            );
+            console.log(isPlaylistMode, isShuffleMode)
+            console.log(currentlyPlayingTrack)
 
+            // プレイリストモードまたはシャッフルモードの時のみ、次の曲への自動遷移を行う
             if (isPlaylistMode || isShuffleMode) {
+                const currentPlaylist = playlists.find(p =>
+                    p.tracks.some(t => t.id === currentlyPlayingTrack)
+                );
+                const currentTrackIndex = currentPlaylist?.tracks.findIndex(t =>
+                    t.id === currentlyPlayingTrack
+                );
+
                 const currentTrack = isShuffleMode
                     ? shuffledTracks.find(t => t.id === currentlyPlayingTrack)
                     : playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack);
@@ -146,8 +150,12 @@ export function PlaylistView({
                 }
             }
 
-            // 通常のループ再生の処理
-            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id && !isPlaylistMode) {
+            if (ms >= duration_ms && currentlyPlayingTrack !== '') {
+                await spotifyApi.pause(token)
+                return
+            }
+
+            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id) {
                 await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time}ms`)
             }
@@ -267,13 +275,12 @@ export function PlaylistView({
         }
     }
     const handlePlayButton = async (uri: string, id: string) => {
-        if (currentlyPlayingTrack === id) {
-            await spotifyApi.pause(token);
-            setCurrentlyPlayingTrack('');
-            setIsPlaylistMode(false)
-        } else {
-            setIsPlaylistMode(false)
-            const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.start_time ?? 0;
+        // プレイリストモードとシャッフルモードをリセット
+        setIsPlaylistMode(false);
+        setIsShuffleMode(false);
+        setShuffledTracks([]); // シャッフルされたトラックもリセット
+
+        try {
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
@@ -283,13 +290,28 @@ export function PlaylistView({
                 return;
             }
 
-            // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
-            if (!spotifyLoopDevice.is_active) await switchDevice(token, device_id)
+            if (currentlyPlayingTrack === id) {
+                // 現在再生中の曲と同じ場合は一時停止
+                await spotifyApi.pause(token);
+                setCurrentlyPlayingTrack('');
+            } else {
+                // 新しい曲を再生
+                const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.start_time ?? 0;
 
-            // 再生
-            await playSong(token, device_id, [uri], position_ms)
+                // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
+                if (!spotifyLoopDevice.is_active) {
+                    await switchDevice(token, device_id);
+                    // デバイス切り替え後の短い待機時間を設定
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
 
-            setCurrentlyPlayingTrack(id);
+                // 再生
+                await playSong(token, device_id, [uri], position_ms);
+                setCurrentlyPlayingTrack(id);
+            }
+        } catch (error) {
+            console.error('再生中にエラーが発生しました:', error);
+            // エラー通知を表示する場合はここに追加
         }
     };
 
