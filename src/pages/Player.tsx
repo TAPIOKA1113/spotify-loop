@@ -95,7 +95,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
 
 
     return (
-        <Box className="min-h-screen bg-gray-900 text-white">
+        <Box className="min-h-screen bg-gray-950 text-white">
             <Container maxW="6xl" py={8}>
                 <VStack align="stretch">
                     <Box className="flex justify-between items-center">
@@ -120,12 +120,20 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         onDeleteSuccess={handleDeleteSuccess}
                     />
 
-                    <Box className="fixed bottom-0 left-0 right-0 bg-gray-800 p-4">
-                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} components={{
+                    <Box className="fixed bottom-0 left-0 right-0 bg-black p-4">
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} styles={{
+                            color: "white",
+                            sliderColor: "#1DB954",
+                            sliderTrackColor: "gray",
+                            sliderHandleColor: "#fff",
+                            trackNameColor: "fff",
+                            trackArtistColor: "fff",
+                            bgColor: '#121212',
+                        }} components={{
                             leftButton: (
                                 <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
                             ),
-                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />,
+                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />, 
                         }} callback={state => {
                             setIsActive(state.isActive)
                             setShuffle(state.shuffle)

@@ -2,6 +2,7 @@ import {
     Accordion,
     AccordionItem,
     AccordionPanel,
+    AccordionLabel,
     VStack,
     HStack,
     Text,
@@ -193,7 +194,7 @@ export function PlaylistView({
         if (currentTrack === trackId) {
             setToggleSwitch(true)
             setCurrentTrack('')
-        } else {   
+        } else {
             setToggleSwitch(false)
             setCurrentTrack(trackId)
         }
@@ -296,8 +297,11 @@ export function PlaylistView({
         <VStack align="stretch" className="bg-gray-800 rounded-lg p-4">
             <Accordion isToggle variant="card">
                 {playlists.map((playlist) => (
-                    <AccordionItem label={playlist.name} key={playlist.id} className="border-b border-gray-700 ">
-                        <AccordionPanel >
+                    <AccordionItem key={playlist.id} className="border-b border-gray-700 ">
+                        <AccordionLabel _expanded={{ bg: "green.400", color: "white" }}>
+                            {playlist.name}
+                        </AccordionLabel>
+                        <AccordionPanel pt={3} bg={["green.50", "green.400"]}>
                             <HStack justify="flex-end" mt={1} mb={2}>
                                 <HStack>
                                     <Tooltip label="はじめから再生">
@@ -329,10 +333,10 @@ export function PlaylistView({
                                     </Tooltip>
                                 </HStack>
                             </HStack>
-                            <VStack 
-                                align="stretch" 
-                                maxH="60vh" 
-                                overflow="auto" 
+                            <VStack
+                                align="stretch"
+                                maxH="60vh"
+                                overflow="auto"
                                 pr="4"
                                 css={{
                                     '&::-webkit-scrollbar': {
@@ -353,10 +357,10 @@ export function PlaylistView({
                                 {playlist.tracks
                                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                                     .map((track) => (
-                                        <Box onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)} key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
+                                        <Box onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)} key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-900 hover:bg-gray-700"}`}>
                                             <HStack justify="space-between">
                                                 <HStack>
-                                                    <Text fontSize="xs" className="text-gray-400 w-6">{track.position}</Text>
+                                                    <Text fontSize="xs" className="text-gray-400 w-6">{track.position + 1}</Text>
                                                     <Image src={track.cover_url} alt={track.name} width={50} height={50} className="rounded-md" />
                                                     <VStack align="start" >
                                                         <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
