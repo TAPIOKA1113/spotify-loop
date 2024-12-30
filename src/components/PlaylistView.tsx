@@ -89,7 +89,7 @@ export function PlaylistView({
             );
 
             if (isPlaylistMode || isShuffleMode) {
-                const currentTrack = isShuffleMode 
+                const currentTrack = isShuffleMode
                     ? shuffledTracks.find(t => t.id === currentlyPlayingTrack)
                     : playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack);
 
@@ -106,27 +106,40 @@ export function PlaylistView({
                             );
                             setCurrentlyPlayingTrack(nextTrack.id);
                         } else {
-                            // シャッフル再生終了時の処理
-                            await spotifyApi.pause(token);
-                            setCurrentlyPlayingTrack('');
-                            setIsPlaylistMode(false);
-                            setIsShuffleMode(false);
-                        }
-                    } else {
-                        // 通常の順番再生の処理（既存のコード）
-                        if (currentPlaylist && currentTrackIndex !== undefined && currentTrackIndex < currentPlaylist.tracks.length - 1) {
-                            const nextTrack = currentPlaylist.tracks[currentTrackIndex + 1];
+                            // シャッフル再生が終わったら、再度シャッフルして最初から再生
+                            const reshuffledTracks = [...shuffledTracks].sort(() => Math.random() - 0.5);
+                            setShuffledTracks(reshuffledTracks);
                             await playSong(
                                 token,
                                 device_id!,
-                                [`spotify:track:${nextTrack.spotify_track_id}`],
-                                nextTrack.start_time
+                                [`spotify:track:${reshuffledTracks[0].spotify_track_id}`],
+                                reshuffledTracks[0].start_time
                             );
-                            setCurrentlyPlayingTrack(nextTrack.id);
-                        } else {
-                            await spotifyApi.pause(token);
-                            setCurrentlyPlayingTrack('');
-                            setIsPlaylistMode(false);
+                            setCurrentlyPlayingTrack(reshuffledTracks[0].id);
+                        }
+                    } else {
+                        // 通常の順番再生の処理
+                        if (currentPlaylist && currentTrackIndex !== undefined) {
+                            if (currentTrackIndex < currentPlaylist.tracks.length - 1) {
+                                const nextTrack = currentPlaylist.tracks[currentTrackIndex + 1];
+                                await playSong(
+                                    token,
+                                    device_id!,
+                                    [`spotify:track:${nextTrack.spotify_track_id}`],
+                                    nextTrack.start_time
+                                );
+                                setCurrentlyPlayingTrack(nextTrack.id);
+                            } else {
+                                // プレイリストの最後まで来たら最初から再生
+                                const firstTrack = currentPlaylist.tracks[0];
+                                await playSong(
+                                    token,
+                                    device_id!,
+                                    [`spotify:track:${firstTrack.spotify_track_id}`],
+                                    firstTrack.start_time
+                                );
+                                setCurrentlyPlayingTrack(firstTrack.id);
+                            }
                         }
                     }
                     return;
