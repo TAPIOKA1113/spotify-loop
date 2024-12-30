@@ -301,15 +301,15 @@ export function PlaylistView({
                         <AccordionLabel _expanded={{ bg: "green.400", color: "white" }}>
                             {playlist.name}
                         </AccordionLabel>
-                        <AccordionPanel pt={3} bg={["green.50", "green.400"]}>
-                            <HStack justify="flex-end" mt={1} mb={2}>
+                        <AccordionPanel pt={3} bg={["gray.900", "gray.900"]}>
+                            <HStack justify="flex-start" mt={1} mb={2}>
                                 <HStack>
                                     <Tooltip label="はじめから再生">
                                         <IconButton
                                             aria-label="はじめから再生"
                                             icon={<PlayCircle />}
                                             size="sm"
-                                            variant="ghost"
+                                            variant="unstyled"
                                             onClick={() => handlePlayFromBeginning(playlist)}
                                         />
                                     </Tooltip>
@@ -318,7 +318,7 @@ export function PlaylistView({
                                             aria-label="プレイリストを編集"
                                             icon={<Edit2 />}
                                             size="sm"
-                                            variant="ghost"
+                                            variant="unstyled"
                                             onClick={() => handleOpenEditPlaylistModal(playlist)}
                                         />
                                     </Tooltip>
@@ -327,7 +327,7 @@ export function PlaylistView({
                                             aria-label="プレイリストを削除"
                                             icon={<Trash />}
                                             size="sm"
-                                            variant="ghost"
+                                            variant="unstyled"
                                             onClick={() => handleDeletePlaylist(playlist.id)}
                                         />
                                     </Tooltip>
@@ -357,14 +357,31 @@ export function PlaylistView({
                                 {playlist.tracks
                                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                                     .map((track) => (
-                                        <Box onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)} key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-900 hover:bg-gray-700"}`}>
+                                        <Box
+                                            onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)}
+                                            key={track.id}
+                                            className={`
+                                                px-2 py-1
+                                                ${currentlyPlayingTrack === track.id
+                                                    ? "bg-gray-700"
+                                                    : "hover:bg-gray-700"
+                                                }
+                                                transition-colors duration-200
+                                            `}
+                                        >
                                             <HStack justify="space-between">
-                                                <HStack>
-                                                    <Text fontSize="xs" className="text-gray-400 w-6">{track.position + 1}</Text>
-                                                    <Image src={track.cover_url} alt={track.name} width={50} height={50} className="rounded-md" />
-                                                    <VStack align="start" >
+                                                <HStack align="center">
+                                                    <Text fontSize="xs" className="text-gray-400 min-w-[24px]">{track.position + 1}</Text>
+                                                    <Image 
+                                                        src={track.cover_url} 
+                                                        alt={track.name} 
+                                                        width={50} 
+                                                        height={50} 
+                                                        className="rounded-md" 
+                                                    />
+                                                    <VStack align="start" gap={1}>
                                                         <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
-                                                        <Text fontSize="sm" className="text-gray-400">{track.artist}</Text>
+                                                        <Text fontSize="sm" className="text-gray-400" mt="-1">{track.artist}</Text>
                                                     </VStack>
                                                 </HStack>
                                                 <HStack >
@@ -375,7 +392,7 @@ export function PlaylistView({
                                                         aria-label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}
                                                         icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                                         size="sm"
-                                                        variant="ghost"
+                                                        variant="unstyled"
                                                         onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)}
                                                         className="text-gray-400 hover:text-spotify-green"
                                                     />
@@ -383,7 +400,7 @@ export function PlaylistView({
                                                         aria-label="Edit"
                                                         icon={<Edit className="w-4 h-4" />}
                                                         size="sm"
-                                                        variant="ghost"
+                                                        variant="unstyled"
                                                         onClick={() => handleEditButton(track.id)}
                                                         className="text-gray-400 hover:text-spotify-green"
                                                     />
