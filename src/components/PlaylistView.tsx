@@ -193,7 +193,7 @@ export function PlaylistView({
         if (currentTrack === trackId) {
             setToggleSwitch(true)
             setCurrentTrack('')
-        } else {
+        } else {   
             setToggleSwitch(false)
             setCurrentTrack(trackId)
         }
@@ -329,34 +329,42 @@ export function PlaylistView({
                                     </Tooltip>
                                 </HStack>
                             </HStack>
-                            <VStack align="stretch" maxH="60vh" overflow="auto" css={{
-                                '&::-webkit-scrollbar': {
-                                    width: '8px',
-                                },
-                                '&::-webkit-scrollbar-track': {
-                                    background: '#2D3748',
-                                    borderRadius: '4px',
-                                },
-                                '&::-webkit-scrollbar-thumb': {
-                                    background: '#4A5568',
-                                    borderRadius: '4px',
-                                },
-                            }}>
+                            <VStack 
+                                align="stretch" 
+                                maxH="60vh" 
+                                overflow="auto" 
+                                pr="4"
+                                css={{
+                                    '&::-webkit-scrollbar': {
+                                        width: '8px',
+                                    },
+                                    '&::-webkit-scrollbar-track': {
+                                        background: '#2D3748',
+                                        borderRadius: '4px',
+                                        marginTop: '4px',
+                                        marginBottom: '4px',
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        background: '#4A5568',
+                                        borderRadius: '4px',
+                                    },
+                                }}
+                            >
                                 {playlist.tracks
                                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                                     .map((track) => (
-                                        <Box key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
+                                        <Box onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)} key={track.id} className={`p-2 rounded-md ${currentlyPlayingTrack === track.id ? "bg-gray-700" : "bg-gray-800 hover:bg-gray-700"}`}>
                                             <HStack justify="space-between">
                                                 <HStack>
                                                     <Text fontSize="xs" className="text-gray-400 w-6">{track.position}</Text>
                                                     <Image src={track.cover_url} alt={track.name} width={50} height={50} className="rounded-md" />
                                                     <VStack align="start" >
                                                         <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
-                                                        <Text fontSize="xs" className="text-gray-400">{track.artist}</Text>
+                                                        <Text fontSize="sm" className="text-gray-400">{track.artist}</Text>
                                                     </VStack>
                                                 </HStack>
                                                 <HStack >
-                                                    <Text fontSize="xs" className="text-gray-400">
+                                                    <Text fontSize="sm" className="text-gray-400">
                                                         {formatTime(track.start_time)} - {formatTime(track.end_time)}
                                                     </Text>
                                                     <IconButton
