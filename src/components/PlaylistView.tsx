@@ -302,7 +302,16 @@ export function PlaylistView({
                 if (!spotifyLoopDevice.is_active) {
                     await switchDevice(token, device_id);
                     // デバイス切り替え後の短い待機時間を設定
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+
+                // 再生前に再度デバイスの状態を確認
+                const updatedDevices = await spotifyApi.getDevices(token);
+                const isDeviceActive = updatedDevices.devices.find(d => d.id === device_id)?.is_active;
+
+                if (!isDeviceActive) {
+                    console.error('デバイスがまだアクティブになっていません');
+                    return;
                 }
 
                 // 再生
