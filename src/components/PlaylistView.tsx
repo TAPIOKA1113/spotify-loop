@@ -329,7 +329,19 @@ export function PlaylistView({
                                     </Tooltip>
                                 </HStack>
                             </HStack>
-                            <VStack align="stretch" >
+                            <VStack align="stretch" maxH="60vh" overflow="auto" css={{
+                                '&::-webkit-scrollbar': {
+                                    width: '8px',
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                    background: '#2D3748',
+                                    borderRadius: '4px',
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    background: '#4A5568',
+                                    borderRadius: '4px',
+                                },
+                            }}>
                                 {playlist.tracks
                                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
                                     .map((track) => (
