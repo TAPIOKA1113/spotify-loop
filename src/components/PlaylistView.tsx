@@ -57,6 +57,7 @@ export function PlaylistView({
     const [isShuffleMode, setIsShuffleMode] = useState(false);
     const [shuffledTracks, setShuffledTracks] = useState<any[]>([]);
 
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
         const userId = localStorage.getItem('spotify_user_id')
@@ -305,15 +306,6 @@ export function PlaylistView({
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
 
-                // 再生前に再度デバイスの状態を確認
-                const updatedDevices = await spotifyApi.getDevices(token);
-                const isDeviceActive = updatedDevices.devices.find(d => d.id === device_id)?.is_active;
-
-                if (!isDeviceActive) {
-                    console.error('デバイスがまだアクティブになっていません');
-                    return;
-                }
-
                 // 再生
                 await playSong(token, device_id, [uri], position_ms);
                 setCurrentlyPlayingTrack(id);
@@ -426,12 +418,14 @@ export function PlaylistView({
     }
 
     const handlePlaylistSelect = async () => {
+        if (!isFirstLoad) return;  // 初回以外は処理をスキップ
+        
         try {
             const playButton = document.querySelector('.ButtonRSWP.rswp__toggle._ControlsButtonRSWP.__3hmsj') as HTMLButtonElement;
-            console.log(playButton)
             if (playButton) {
                 playButton.click();
                 await spotifyApi.pause(token);
+                setIsFirstLoad(false);  // 処理完了後にフラグを更新
             }
         } catch (error) {
             console.error('初期化中にエラーが発生しました:', error);
