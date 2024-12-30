@@ -13,7 +13,7 @@ import {
     Box,
     Slide
 } from '@yamada-ui/react'
-import { Edit, Play, Pause, Edit2, PlayCircle, Trash } from 'lucide-react'
+import { Edit, Play, Pause, PlayCircle, Trash, Shuffle } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
 import { PlaylistEditModal } from './Modal/PlaylistEditModal'
@@ -54,6 +54,8 @@ export function PlaylistView({
     const [notificationMessage, setNotificationMessage] = useState('')
 
     const [isPlaylistMode, setIsPlaylistMode] = useState(false);
+    const [isShuffleMode, setIsShuffleMode] = useState(false);
+    const [shuffledTracks, setShuffledTracks] = useState<any[]>([]);
 
 
     const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
@@ -86,25 +88,46 @@ export function PlaylistView({
                 t.id === currentlyPlayingTrack
             );
 
-            if (isPlaylistMode) {
-                // プレイリストモードの場合、ループ終了位置で次の曲に移動
-                const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack);
-                if (currentTrack && ms >= currentTrack.end_time && currentPlaylist && currentTrackIndex !== undefined) {
-                    if (currentTrackIndex < currentPlaylist.tracks.length - 1) {
-                        // 次の曲を再生
-                        const nextTrack = currentPlaylist.tracks[currentTrackIndex + 1];
-                        await playSong(
-                            token,
-                            device_id!,
-                            [`spotify:track:${nextTrack.spotify_track_id}`],
-                            nextTrack.start_time
-                        );
-                        setCurrentlyPlayingTrack(nextTrack.id);
+            if (isPlaylistMode || isShuffleMode) {
+                const currentTrack = isShuffleMode 
+                    ? shuffledTracks.find(t => t.id === currentlyPlayingTrack)
+                    : playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack);
+
+                if (currentTrack && ms >= currentTrack.end_time) {
+                    if (isShuffleMode) {
+                        const currentIndex = shuffledTracks.findIndex(t => t.id === currentlyPlayingTrack);
+                        if (currentIndex < shuffledTracks.length - 1) {
+                            const nextTrack = shuffledTracks[currentIndex + 1];
+                            await playSong(
+                                token,
+                                device_id!,
+                                [`spotify:track:${nextTrack.spotify_track_id}`],
+                                nextTrack.start_time
+                            );
+                            setCurrentlyPlayingTrack(nextTrack.id);
+                        } else {
+                            // シャッフル再生終了時の処理
+                            await spotifyApi.pause(token);
+                            setCurrentlyPlayingTrack('');
+                            setIsPlaylistMode(false);
+                            setIsShuffleMode(false);
+                        }
                     } else {
-                        // プレイリストの最後の曲の場合は停止
-                        await spotifyApi.pause(token);
-                        setCurrentlyPlayingTrack('');
-                        setIsPlaylistMode(false);
+                        // 通常の順番再生の処理（既存のコード）
+                        if (currentPlaylist && currentTrackIndex !== undefined && currentTrackIndex < currentPlaylist.tracks.length - 1) {
+                            const nextTrack = currentPlaylist.tracks[currentTrackIndex + 1];
+                            await playSong(
+                                token,
+                                device_id!,
+                                [`spotify:track:${nextTrack.spotify_track_id}`],
+                                nextTrack.start_time
+                            );
+                            setCurrentlyPlayingTrack(nextTrack.id);
+                        } else {
+                            await spotifyApi.pause(token);
+                            setCurrentlyPlayingTrack('');
+                            setIsPlaylistMode(false);
+                        }
                     }
                     return;
                 }
@@ -118,7 +141,7 @@ export function PlaylistView({
         }, 500)
 
         return () => clearInterval(interval)
-    }, [currentlyPlayingTrack, token, toggleSwitch, deviceName, playlists, isPlaylistMode])
+    }, [currentlyPlayingTrack, token, toggleSwitch, deviceName, playlists, isPlaylistMode, isShuffleMode, shuffledTracks])
 
     const formatTime = (ms: number) => {
         const totalSeconds = ms / 1000
@@ -284,6 +307,39 @@ export function PlaylistView({
         setCurrentlyPlayingTrack(playlist.tracks[0].id)
     }
 
+    const handleShufflePlaylist = async (playlist: Playlist) => {
+        setIsPlaylistMode(true);
+        setIsShuffleMode(true);
+
+        // トラックをシャッフル
+        const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
+        setShuffledTracks(shuffled);
+        console.log(shuffled)
+
+        const devices = await spotifyApi.getDevices(token);
+        const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
+        const device_id = spotifyLoopDevice?.id;
+        const shuffledTracks = shuffled.map(track => {
+            return {
+                ...track
+            }
+        })
+        const uris = shuffledTracks.map(track => `spotify:track:${track.spotify_track_id}`)
+        const initialSongPosition = shuffledTracks[0].start_time ?? 0
+
+        if (!device_id) {
+            console.error('spotify-loopデバイスが見つかりません');
+            return;
+        }
+
+        // spotify-loopデバイスがアクティブでない場合のみ切り替えを実行
+        if (!spotifyLoopDevice.is_active) await switchDevice(token, device_id)
+
+        await playSong(token, device_id, uris, initialSongPosition)
+
+        setCurrentlyPlayingTrack(shuffledTracks[0].id)
+    };
+
     const handleOpenEditPlaylistModal = (playlist: Playlist) => {
         setSelectedPlaylist(playlist)
         setIsEditPlaylistModalOpen(true);
@@ -335,7 +391,7 @@ export function PlaylistView({
                             {playlist.name}
                         </AccordionLabel>
                         <AccordionPanel pt={3} bg={["gray.900", "gray.900"]}>
-                            <HStack justify="flex-start" mt={1} mb={2}>
+                            <HStack justify="space-between" mt={1} mb={2}>
                                 <HStack>
                                     <Tooltip label="はじめから再生">
                                         <IconButton
@@ -346,10 +402,21 @@ export function PlaylistView({
                                             onClick={() => handlePlayFromBeginning(playlist)}
                                         />
                                     </Tooltip>
+                                    <Tooltip label="シャッフル再生">
+                                        <IconButton
+                                            aria-label="シャッフル再生"
+                                            icon={<Shuffle />}
+                                            size="sm"
+                                            variant="unstyled"
+                                            onClick={() => handleShufflePlaylist(playlist)}
+                                        />
+                                    </Tooltip>
+                                </HStack>
+                                <HStack>
                                     <Tooltip label="プレイリストを編集">
                                         <IconButton
                                             aria-label="プレイリストを編集"
-                                            icon={<Edit2 />}
+                                            icon={<Edit />}
                                             size="sm"
                                             variant="unstyled"
                                             onClick={() => handleOpenEditPlaylistModal(playlist)}
@@ -366,6 +433,7 @@ export function PlaylistView({
                                     </Tooltip>
                                 </HStack>
                             </HStack>
+
                             <VStack
                                 align="stretch"
                                 maxH="60vh"
