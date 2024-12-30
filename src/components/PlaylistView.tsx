@@ -425,10 +425,30 @@ export function PlaylistView({
         setSelectedPlaylist(null)
     }
 
+    const handlePlaylistSelect = async () => {
+        try {
+            const playButton = document.querySelector('.ButtonRSWP.rswp__toggle._ControlsButtonRSWP.__3hmsj') as HTMLButtonElement;
+            console.log(playButton)
+            if (playButton) {
+                playButton.click();
+                await spotifyApi.pause(token);
+            }
+        } catch (error) {
+            console.error('初期化中にエラーが発生しました:', error);
+        }
+    };
 
     return (
         <VStack align="stretch" className="bg-gray-800 rounded-lg p-4">
-            <Accordion isToggle variant="card">
+            <Accordion 
+                isToggle 
+                variant="card"
+                onChange={(expandedIndex) => {
+                    if (typeof expandedIndex === 'number' && expandedIndex !== -1) {
+                        handlePlaylistSelect();
+                    }
+                }}
+            >
                 {playlists.map((playlist) => (
                     <AccordionItem key={playlist.id} className="border-b border-gray-700 ">
                         <AccordionLabel _expanded={{ bg: "green.400", color: "white" }}>
