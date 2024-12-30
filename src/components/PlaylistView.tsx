@@ -53,6 +53,9 @@ export function PlaylistView({
     const [notificationType, setNotificationType] = useState<'success' | 'error'>('success')
     const [notificationMessage, setNotificationMessage] = useState('')
 
+    const [isPlaylistMode, setIsPlaylistMode] = useState(false);
+
+
     const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
         const userId = localStorage.getItem('spotify_user_id')
         const response = await apiClient.put(`/api/playlists/${userId}/${playlistId}`, {
@@ -64,30 +67,58 @@ export function PlaylistView({
     }
 
 
+    // useEffectを修正
     useEffect(() => {
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0
             const currentTrackId = state?.item?.id
-            const duration_ms = state?.item?.duration_ms ?? 0
+            // const duration_ms = state?.item?.duration_ms ?? 0 
             const devices = await spotifyApi.getDevices(token)
             const activeDeviceId = devices.devices.find(device => device.is_active)?.id
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
 
-            if (ms >= duration_ms && currentlyPlayingTrack !== '') {
-                await spotifyApi.pause(token)
-                return
+            const currentPlaylist = playlists.find(p =>
+                p.tracks.some(t => t.id === currentlyPlayingTrack)
+            );
+            const currentTrackIndex = currentPlaylist?.tracks.findIndex(t =>
+                t.id === currentlyPlayingTrack
+            );
+
+            if (isPlaylistMode) {
+                // プレイリストモードの場合、ループ終了位置で次の曲に移動
+                const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack);
+                if (currentTrack && ms >= currentTrack.end_time && currentPlaylist && currentTrackIndex !== undefined) {
+                    if (currentTrackIndex < currentPlaylist.tracks.length - 1) {
+                        // 次の曲を再生
+                        const nextTrack = currentPlaylist.tracks[currentTrackIndex + 1];
+                        await playSong(
+                            token,
+                            device_id!,
+                            [`spotify:track:${nextTrack.spotify_track_id}`],
+                            nextTrack.start_time
+                        );
+                        setCurrentlyPlayingTrack(nextTrack.id);
+                    } else {
+                        // プレイリストの最後の曲の場合は停止
+                        await spotifyApi.pause(token);
+                        setCurrentlyPlayingTrack('');
+                        setIsPlaylistMode(false);
+                    }
+                    return;
+                }
             }
 
-            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id) {
+            // 通常のループ再生の処理
+            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id && !isPlaylistMode) {
                 await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time}ms`)
             }
         }, 500)
 
         return () => clearInterval(interval)
-    }, [currentlyPlayingTrack, token, toggleSwitch, deviceName])
+    }, [currentlyPlayingTrack, token, toggleSwitch, deviceName, playlists, isPlaylistMode])
 
     const formatTime = (ms: number) => {
         const totalSeconds = ms / 1000
@@ -203,7 +234,9 @@ export function PlaylistView({
         if (currentlyPlayingTrack === id) {
             await spotifyApi.pause(token);
             setCurrentlyPlayingTrack('');
+            setIsPlaylistMode(false)
         } else {
+            setIsPlaylistMode(false)
             const position_ms = playlists.flatMap(p => p.tracks).find(t => t.id === id)?.start_time ?? 0;
             const devices = await spotifyApi.getDevices(token);
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
@@ -225,7 +258,7 @@ export function PlaylistView({
     };
 
     const handlePlayFromBeginning = async (playlist: Playlist) => {
-        console.log(playlist)
+        setIsPlaylistMode(true)
         const devices = await spotifyApi.getDevices(token);
         const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
         const device_id = spotifyLoopDevice?.id;
@@ -343,13 +376,12 @@ export function PlaylistView({
                                         width: '8px',
                                     },
                                     '&::-webkit-scrollbar-track': {
-                                        background: '#2D3748',
                                         borderRadius: '4px',
                                         marginTop: '4px',
                                         marginBottom: '4px',
                                     },
                                     '&::-webkit-scrollbar-thumb': {
-                                        background: '#4A5568',
+                                        background: '#BDBDBD',
                                         borderRadius: '4px',
                                     },
                                 }}
@@ -369,21 +401,20 @@ export function PlaylistView({
                                             <HStack justify="space-between">
                                                 <HStack align="center" flex={1}>
                                                     <Text fontSize="xs" className="text-gray-400 min-w-[24px]">{track.position + 1}</Text>
-                                                    <Image 
-                                                        src={track.cover_url} 
-                                                        alt={track.name} 
-                                                        width={50} 
-                                                        height={50} 
-                                                        className="rounded-md" 
+                                                    <Image
+                                                        src={track.cover_url}
+                                                        alt={track.name}
+                                                        width={50}
+                                                        height={50}
+                                                        className="rounded-md"
                                                     />
                                                     <VStack align="start" gap={1} flex={1}>
-                                                        <Text 
-                                                            fontWeight="semibold" 
-                                                            className={`text-sm ${
-                                                                currentlyPlayingTrack === track.id 
-                                                                ? "text-green-400" 
+                                                        <Text
+                                                            fontWeight="semibold"
+                                                            className={`text-sm ${currentlyPlayingTrack === track.id
+                                                                ? "text-green-400"
                                                                 : ""
-                                                            }`}
+                                                                }`}
                                                         >
                                                             {track.name}
                                                         </Text>
