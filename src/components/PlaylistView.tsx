@@ -370,7 +370,7 @@ export function PlaylistView({
                                             `}
                                         >
                                             <HStack justify="space-between">
-                                                <HStack align="center">
+                                                <HStack align="center" flex={1}>
                                                     <Text fontSize="xs" className="text-gray-400 min-w-[24px]">{track.position + 1}</Text>
                                                     <Image 
                                                         src={track.cover_url} 
@@ -379,13 +379,13 @@ export function PlaylistView({
                                                         height={50} 
                                                         className="rounded-md" 
                                                     />
-                                                    <VStack align="start" gap={1}>
+                                                    <VStack align="start" gap={1} flex={1}>
                                                         <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
                                                         <Text fontSize="sm" className="text-gray-400" mt="-1">{track.artist}</Text>
                                                     </VStack>
                                                 </HStack>
-                                                <HStack >
-                                                    <Text fontSize="sm" className="text-gray-400">
+                                                <HStack w="200px" justify="flex-end" >
+                                                    <Text fontSize="sm" className="text-gray-400 min-w-[150px] text-left">
                                                         {formatTime(track.start_time)} - {formatTime(track.end_time)}
                                                     </Text>
                                                     <IconButton
@@ -393,7 +393,10 @@ export function PlaylistView({
                                                         icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                                         size="sm"
                                                         variant="unstyled"
-                                                        onClick={() => handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handlePlayButton(`spotify:track:${track.spotify_track_id}`, track.id);
+                                                        }}
                                                         className="text-gray-400 hover:text-spotify-green"
                                                     />
                                                     <IconButton
@@ -401,7 +404,10 @@ export function PlaylistView({
                                                         icon={<Edit className="w-4 h-4" />}
                                                         size="sm"
                                                         variant="unstyled"
-                                                        onClick={() => handleEditButton(track.id)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditButton(track.id);
+                                                        }}
                                                         className="text-gray-400 hover:text-spotify-green"
                                                     />
                                                 </HStack>
