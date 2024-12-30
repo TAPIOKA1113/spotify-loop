@@ -362,10 +362,7 @@ export function PlaylistView({
                                             key={track.id}
                                             className={`
                                                 px-2 py-1
-                                                ${currentlyPlayingTrack === track.id
-                                                    ? "bg-gray-700"
-                                                    : "hover:bg-gray-700"
-                                                }
+                                                hover:bg-gray-700
                                                 transition-colors duration-200
                                             `}
                                         >
@@ -380,7 +377,16 @@ export function PlaylistView({
                                                         className="rounded-md" 
                                                     />
                                                     <VStack align="start" gap={1} flex={1}>
-                                                        <Text fontWeight="semibold" className="text-sm">{track.name}</Text>
+                                                        <Text 
+                                                            fontWeight="semibold" 
+                                                            className={`text-sm ${
+                                                                currentlyPlayingTrack === track.id 
+                                                                ? "text-green-400" 
+                                                                : ""
+                                                            }`}
+                                                        >
+                                                            {track.name}
+                                                        </Text>
                                                         <Text fontSize="sm" className="text-gray-400" mt="-1">{track.artist}</Text>
                                                     </VStack>
                                                 </HStack>
