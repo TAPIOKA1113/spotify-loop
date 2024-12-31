@@ -25,6 +25,16 @@ export const playSong = async (token: string, deviceId: string, uris: string[], 
     });
 }
 
+export const search = async (token: string, query: string) => {
+    const response = await fetch(`https://api.spotify.com/v1/search?q=${query}&type=track&limit=10`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+    return response.json();
+}   
+
 export const refreshToken = async () => {
     const response = await fetch('https://accounts.spotify.com/api/token', {
         method: 'POST',

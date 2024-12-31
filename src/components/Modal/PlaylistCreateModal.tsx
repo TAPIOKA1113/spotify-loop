@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
     Modal,
     ModalBody,
@@ -15,13 +15,13 @@ import {
     Reorder,
     ReorderItem,
 } from '@yamada-ui/react'
-import { Plus, Trash2 } from 'lucide-react'
-import { spotifyApi } from 'react-spotify-web-playback'
+import { Trash2} from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import { Track } from '../../types/Track'
 import { Playlist } from '../../types/Playlist'
 import { apiClient } from '../../utils/api'
-
+import debounce from 'lodash/debounce'
+import { search } from '../../utils/spotify'
 
 interface PlaylistCreateModalProps {
     isOpen: boolean;
@@ -29,34 +29,79 @@ interface PlaylistCreateModalProps {
     token: string;
 }
 
+// 検索結果の型を定義
+interface SearchResult {
+    id: string;
+    name: string;
+    artist: string;
+    album: string;
+    cover_url: string;
+    duration_ms: number;
+}
+
 export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateModalProps) {
     const [tracks, setTracks] = useState<Track[]>([])
-    const [newTrackId, setNewTrackId] = useState('')
     const [playlistName, setPlaylistName] = useState('')
     const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+    const [isSearching, setIsSearching] = useState(false)
 
+    // 検索処理を実行する関数
+    const searchTracks = async (query: string) => {
+        if (!query) {
+            setSearchResults([])
+            return
+        }
 
-    const searchTrackName = async (trackId: string) => {
-        const Track = await spotifyApi.getTrack(token, trackId)
-        return Track
+        setIsSearching(true)
+        try {
+            const result = await search(token, query)
+            const tracks = result.tracks.items.map((track: any) => ({
+                id: track.id,
+                name: track.name,
+                artist: track.artists[0].name,
+                album: track.album.name,
+                cover_url: track.album.images[0]?.url,
+                duration_ms: track.duration_ms
+            }))
+            setSearchResults(tracks)
+        } catch (error) {
+            console.error('検索中にエラーが発生しました:', error)
+        } finally {
+            setIsSearching(false)
+        }
     }
 
-    const addTrack = async () => {
-        const Track = await searchTrackName(newTrackId)
-        if (Track) {
-            const trackId = newTrackId.split(':').pop() || newTrackId
-            setTracks([...tracks, {
-                id: uuidv4(),
-                spotify_track_id: trackId,
-                name: Track.name,
-                artist: Track.artists[0].name,
-                cover_url: Track.album.images[0].url,
-                start_time: 0,
-                end_time: Track.duration_ms || 0,
-                position: tracks.length
-            }])
-            setNewTrackId('')
+    // debounceを使用して検索処理を最適化
+    const debouncedSearch = useCallback(
+        debounce((query: string) => searchTracks(query), 500),
+        [token]
+    )
+
+    // 検索クエリが変更されたときに検索を実行
+    useEffect(() => {
+        debouncedSearch(searchQuery)
+        return () => {
+            debouncedSearch.cancel()
         }
+    }, [searchQuery, debouncedSearch])
+
+    // 検索結果から曲を選択して追加する関数
+    const addTrackFromSearch = (result: SearchResult) => {
+        console.log(result)
+        setTracks([...tracks, {
+            id: uuidv4(),
+            spotify_track_id: result.id,
+            name: result.name,
+            artist: result.artist,
+            cover_url: result.cover_url,
+            start_time: 0,
+            end_time: result.duration_ms,
+            position: tracks.length
+        }])
+        setSearchQuery('')
+        setSearchResults([])
     }
 
     const removeTrack = (index: number) => {
@@ -122,7 +167,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
             <ModalHeader>プレイリストを作成</ModalHeader>
             <ModalCloseButton />
             <ModalBody py={6}>
-                <VStack align="stretch" >
+                <VStack align="stretch">
                     {error && (
                         <Text color="red.500" fontSize="sm">
                             {error}
@@ -134,19 +179,56 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
                         placeholder="プレイリスト名"
                     />
 
-                    <HStack>
+                    <VStack align="stretch">
                         <Input
-                            flex={1}
-                            value={newTrackId}
-                            onChange={(e) => setNewTrackId(e.target.value)}
-                            placeholder="SpotifyトラックIDを入力"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="曲名やアーティスト名で検索"
                         />
-                        <IconButton
-                            aria-label="Add track"
-                            icon={<Plus />}
-                            onClick={addTrack}
-                        />
-                    </HStack>
+
+                        {isSearching && (
+                            <Text fontSize="sm" color="gray.500">
+                                検索中...
+                            </Text>
+                        )}
+
+                        {searchResults.length > 0 && (
+                            <VStack 
+                                align="stretch" 
+                                bg="gray.50" 
+                                rounded="md" 
+                                p={2}
+                                maxH="200px"
+                                overflowY="auto"
+                            >
+                                {searchResults.map((result) => (
+                                    <HStack
+                                        key={result.id}
+                                        p={2}
+                                        _hover={{ bg: "gray.100" }}
+                                        cursor="pointer"
+                                        onClick={() => addTrackFromSearch(result)}
+                                    >
+                                        <Image
+                                            src={result.cover_url}
+                                            alt={result.name}
+                                            width={50}
+                                            height={50}
+                                            rounded="md"
+                                        />
+                                        <VStack align="start">
+                                            <Text fontSize="sm" fontWeight="bold">
+                                                {result.name}
+                                            </Text>
+                                            <Text fontSize="xs" color="gray.600">
+                                                {result.artist} - {result.album}
+                                            </Text>
+                                        </VStack>
+                                    </HStack>
+                                ))}
+                            </VStack>
+                        )}
+                    </VStack>
 
                     <VStack align="stretch" >
                         <Reorder
