@@ -128,7 +128,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                             sliderHandleColor: "#fff",
                             trackNameColor: "fff",
                             trackArtistColor: "fff",
-                            bgColor: '#121212',
+                            bgColor: 'black',
                         }} components={{
                             leftButton: (
                                 <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />

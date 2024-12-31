@@ -82,9 +82,6 @@ export function PlaylistView({
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
 
-            console.log(isPlaylistMode, isShuffleMode)
-            console.log(currentlyPlayingTrack)
-
             // プレイリストモードまたはシャッフルモードの時のみ、次の曲への自動遷移を行う
             if (isPlaylistMode || isShuffleMode) {
                 const currentPlaylist = playlists.find(p =>
@@ -419,7 +416,7 @@ export function PlaylistView({
 
     const handlePlaylistSelect = async () => {
         if (!isFirstLoad) return;  // 初回以外は処理をスキップ
-        
+
         try {
             const playButton = document.querySelector('.ButtonRSWP.rswp__toggle._ControlsButtonRSWP.__3hmsj') as HTMLButtonElement;
             if (playButton) {
@@ -433,9 +430,9 @@ export function PlaylistView({
     };
 
     return (
-        <VStack align="stretch" className="bg-gray-800 rounded-lg p-4">
-            <Accordion 
-                isToggle 
+        <VStack align="stretch" className="bg-gray-900 rounded-lg p-4">
+            <Accordion
+                isToggle
                 variant="card"
                 onChange={(expandedIndex) => {
                     if (typeof expandedIndex === 'number' && expandedIndex !== -1) {
@@ -494,7 +491,7 @@ export function PlaylistView({
 
                             <VStack
                                 align="stretch"
-                                maxH="60vh"
+                                maxH="50vh"
                                 overflow="auto"
                                 pr="4"
                                 css={{
