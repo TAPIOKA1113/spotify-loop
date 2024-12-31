@@ -177,11 +177,11 @@ export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mo
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} size="xl" bg="gray.800" color="white">
             <ModalOverlay />
-            <ModalHeader>プレイリストを作成</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody py={6}>
+            <ModalHeader bg="gray.800" color="white">プレイリストを作成</ModalHeader>
+            <ModalCloseButton color="white" />
+            <ModalBody py={6} bg="gray.800" color="white">
                 <VStack align="stretch">
                     {error && (
                         <Text color="red.500" fontSize="sm">
@@ -210,11 +210,11 @@ export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mo
                         {searchResults.length > 0 && (
                             <VStack
                                 align="stretch"
-                                bg="gray.50"
                                 rounded="md"
                                 p={2}
                                 maxH="200px"
                                 overflowY="auto"
+                                bg="gray.500"
                             >
                                 {searchResults.map((result) => (
                                     <HStack
@@ -235,7 +235,7 @@ export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mo
                                             <Text fontSize="sm" fontWeight="bold">
                                                 {result.name}
                                             </Text>
-                                            <Text fontSize="xs" color="gray.600">
+                                            <Text fontSize="xs">
                                                 {result.artist} - {result.album}
                                             </Text>
                                         </VStack>
@@ -254,16 +254,16 @@ export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mo
                                     key={track.id}
                                     value={track.id}
                                     p={3}
-                                    bg="gray.50"
+                                    bg="gray.700"
                                     rounded="md"
                                     display="flex"
                                     alignItems="center"
                                     justifyContent="space-between"
                                 >
                                     <Image src={track.cover_url} alt={track.name} width={50} height={50} rounded="md" />
-                                    <VStack>
-                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value, track.id)} />
-                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value, track.id)} />
+                                    <VStack gap={0}>
+                                        <Input flex={1} value={track.name} onChange={(e) => setTrackName(e.target.value, track.id)} variant="ghost" />
+                                        <Input flex={1} value={track.artist} onChange={(e) => setArtistName(e.target.value, track.id)} variant="ghost" />
                                     </VStack>
                                     <IconButton
                                         aria-label="Remove track"
