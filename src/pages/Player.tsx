@@ -8,7 +8,7 @@ import {
     Heading
 } from '@yamada-ui/react'
 import { PlaylistView } from '../components/PlaylistView'
-import { PlaylistCreateModal } from '../components/Modal/PlaylistCreateModal'
+import { PlaylistFormModal } from '../components/Modal/PlaylistFormModal'
 import ShuffleButton from '../components/ShuffleButton'
 import RepeatButton from '../components/RepeatButton'
 import { Playlist } from '../types/Playlist'
@@ -140,10 +140,12 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                             setRepeat(state.repeat)
                         }} />
                     </Box>
-                    <PlaylistCreateModal
+                    <PlaylistFormModal
                         isOpen={isCreateModalOpen}
                         onClose={() => setIsCreateModalOpen(false)}
                         token={token}
+                        onSave={handleSavePlaylist}
+                        mode="create"
                     />
                 </VStack>
 

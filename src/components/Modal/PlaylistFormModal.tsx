@@ -15,21 +15,22 @@ import {
     Reorder,
     ReorderItem,
 } from '@yamada-ui/react'
-import { Trash2} from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import debounce from 'lodash/debounce'
 import { Track } from '../../types/Track'
 import { Playlist } from '../../types/Playlist'
-import { apiClient } from '../../utils/api'
-import debounce from 'lodash/debounce'
 import { search } from '../../utils/spotify'
-
-interface PlaylistCreateModalProps {
+import { apiClient } from '../../utils/api'
+interface PlaylistFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     token: string;
+    onSave: (playlist: Playlist) => void;
+    playlist?: Playlist | null;
+    mode: 'create' | 'edit';
 }
 
-// 検索結果の型を定義
 interface SearchResult {
     id: string;
     name: string;
@@ -39,15 +40,25 @@ interface SearchResult {
     duration_ms: number;
 }
 
-export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateModalProps) {
+export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mode }: PlaylistFormModalProps) {
     const [tracks, setTracks] = useState<Track[]>([])
     const [playlistName, setPlaylistName] = useState('')
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [searchResults, setSearchResults] = useState<SearchResult[]>([])
     const [isSearching, setIsSearching] = useState(false)
 
-    // 検索処理を実行する関数
+    // 編集モードの場合、既存のプレイリスト情報をセット
+    useEffect(() => {
+        if (mode === 'edit' && playlist) {
+            setTracks(playlist.tracks)
+            setPlaylistName(playlist.name)
+        } else {
+            setTracks([])
+            setPlaylistName('')
+        }
+    }, [mode, playlist])
+
     const searchTracks = async (query: string) => {
         if (!query) {
             setSearchResults([])
@@ -73,13 +84,11 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
         }
     }
 
-    // debounceを使用して検索処理を最適化
     const debouncedSearch = useCallback(
         debounce((query: string) => searchTracks(query), 500),
         [token]
     )
 
-    // 検索クエリが変更されたときに検索を実行
     useEffect(() => {
         debouncedSearch(searchQuery)
         return () => {
@@ -87,9 +96,7 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
         }
     }, [searchQuery, debouncedSearch])
 
-    // 検索結果から曲を選択して追加する関数
     const addTrackFromSearch = (result: SearchResult) => {
-        console.log(result)
         setTracks([...tracks, {
             id: uuidv4(),
             spotify_track_id: result.id,
@@ -108,13 +115,31 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
         setTracks(tracks.filter((_, i) => i !== index))
     }
 
+
+    const handleReorder = (values: string[]) => {
+        const newOrder = values.map((value, index) => {
+            const id = value
+            const track = tracks.find(track => track.id === id)!
+            return { ...track, position: index }
+        })
+        setTracks(newOrder)
+    }
+
+    const setTrackName = (value: string, trackId: string) => {
+        setTracks(tracks.map(track => track.id === trackId ? { ...track, name: value } : track))
+    }
+
+    const setArtistName = (value: string, trackId: string) => {
+        setTracks(tracks.map(track => track.id === trackId ? { ...track, artist: value } : track))
+    }
+
     const savePlaylist = async () => {
-        if (playlistName && tracks.length > 0) {
+        if (playlistName && tracks.length > 0 && mode === 'create') {
             setError(null);
 
             try {
                 const userId = localStorage.getItem('spotify_user_id');
-                
+
                 const playlist: Playlist = {
                     id: uuidv4(),
                     name: playlistName,
@@ -140,26 +165,16 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
                 console.error('プレイリスト作成エラー:', error);
                 setError(error instanceof Error ? error.message : 'プレイリストの作成に失敗しました');
             }
+        } else if (playlist?.name && playlist?.tracks.length > 0 && mode === 'edit') {
+            const newPlaylist: Playlist = {
+                id: playlist.id,
+                name: playlistName,
+                tracks: tracks
+            }
+            onSave(newPlaylist)
+            onClose()
         }
     };
-
-    const handleReorder = (values: string[]) => {
-        const newOrder = values.map((value, index) => {
-            const id = value
-            const track = tracks.find(track => track.id === id)!
-            return { ...track, position: index }
-        })
-        setTracks(newOrder)
-        console.log(tracks)
-    }
-
-    const setTrackName = (value: string) => {
-        setTracks(tracks.map(track => ({ ...track, name: value })))
-    }
-
-    const setArtistName = (value: string) => {
-        setTracks(tracks.map(track => ({ ...track, artist: value })))
-    }
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="xl">
@@ -193,10 +208,10 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
                         )}
 
                         {searchResults.length > 0 && (
-                            <VStack 
-                                align="stretch" 
-                                bg="gray.50" 
-                                rounded="md" 
+                            <VStack
+                                align="stretch"
+                                bg="gray.50"
+                                rounded="md"
                                 p={2}
                                 maxH="200px"
                                 overflowY="auto"
@@ -247,8 +262,8 @@ export function PlaylistCreateModal({ isOpen, onClose, token }: PlaylistCreateMo
                                 >
                                     <Image src={track.cover_url} alt={track.name} width={50} height={50} rounded="md" />
                                     <VStack>
-                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value)} />
-                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value)} />
+                                        <Input flex={1} ml={3} value={track.name} onChange={(e) => setTrackName(e.target.value, track.id)} />
+                                        <Input flex={1} ml={3} value={track.artist} onChange={(e) => setArtistName(e.target.value, track.id)} />
                                     </VStack>
                                     <IconButton
                                         aria-label="Remove track"

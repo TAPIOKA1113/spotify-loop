@@ -16,11 +16,11 @@ import {
 import { Edit, Play, Pause, PlayCircle, Trash, Shuffle } from 'lucide-react'
 import { spotifyApi } from 'react-spotify-web-playback'
 import { useState, useEffect } from 'react'
-import { PlaylistEditModal } from './Modal/PlaylistEditModal'
 import { PlaylistDeleteModal } from './Modal/PlaylistDeleteModal'
 import { switchDevice, playSong } from '../utils/spotify'
 import { Playlist } from '../types/Playlist'
 import { apiClient } from '../utils/api'
+import { PlaylistFormModal } from './Modal/PlaylistFormModal'
 
 interface PlaylistViewProps {
     token: string;
@@ -600,19 +600,13 @@ export function PlaylistView({
                 ))}
             </Accordion>
             {selectedPlaylist && (
-                <PlaylistEditModal
+                <PlaylistFormModal
                     isOpen={isEditPlaylistModalOpen}
-                    onClose={() => {
-                        setIsEditPlaylistModalOpen(false)
-                        setSelectedPlaylist({
-                            id: '',
-                            name: '',
-                            tracks: []
-                        })
-                    }}
+                    onClose={() => setIsEditPlaylistModalOpen(false)}
                     token={token}
-                    onSavePlaylist={handleSaveEditPlaylistModal}
+                    onSave={handleSaveEditPlaylistModal}
                     playlist={selectedPlaylist}
+                    mode="edit"
                 />
             )}
             {isDeletePlaylistModalOpen && (
