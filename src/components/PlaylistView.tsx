@@ -43,7 +43,7 @@ export function PlaylistView({
     onDeletePlaylist,
 }: PlaylistViewProps) {
 
-    const [toggleSwitch, setToggleSwitch] = useState(true)
+    const [toggleSwitch, setToggleSwitch] = useState(false)
     const [currentTrack, setCurrentTrack] = useState<string>('')
     const [currentlyPlayingTrack, setCurrentlyPlayingTrack] = useState<string>('')
     const [isEditPlaylistModalOpen, setIsEditPlaylistModalOpen] = useState(false)
@@ -73,6 +73,7 @@ export function PlaylistView({
     // useEffectを修正
     useEffect(() => {
         if (!currentlyPlayingTrack) return;
+        if (!toggleSwitch) return;
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0 // 再生位置
@@ -178,26 +179,38 @@ export function PlaylistView({
         return `${minutes}:${formattedSeconds}`
     }
 
-    // 開始位置を設定
-    const setLoopEndPositionA = async (id: string, playlistId: string) => {
+    const setLoopPosition = async (id: string, playlistId: string, isStartPosition: boolean) => {
         const state = await spotifyApi.getPlaybackState(token)
         const ms: number = state?.progress_ms ?? 0
         const duration_ms: number = state?.item?.duration_ms ?? 0
 
-        // 現在のトラックのendTimeを取得
         const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
+        const currentStartTime = currentTrack?.start_time ?? 0
         const currentEndTime = currentTrack?.end_time ?? duration_ms
 
-        if (currentEndTime && ms >= currentEndTime) {
-            setNotificationType('error')
-            setNotificationMessage('開始位置は終了位置より前に設定する必要があります')
-            setShowNotification(true)
-            setTimeout(() => setShowNotification(false), 3000)
-            return
+        // 位置の妥当性チェック
+        if (isStartPosition) {
+            if (currentEndTime && ms >= currentEndTime) {
+                setNotificationType('error')
+                setNotificationMessage('開始位置は終了位置より前に設定する必要があります')
+                setShowNotification(true)
+                setTimeout(() => setShowNotification(false), 3000)
+                return
+            }
+        } else {
+            if (currentStartTime && ms <= currentStartTime) {
+                setNotificationType('error')
+                setNotificationMessage('終了位置は開始位置より後に設定する必要があります')
+                setShowNotification(true)
+                setTimeout(() => setShowNotification(false), 3000)
+                return
+            }
         }
 
         // ローカルステートの更新
-        onUpdateTrackTimes(playlistId, id, ms, currentEndTime)
+        const newStartTime = isStartPosition ? ms : currentStartTime
+        const newEndTime = isStartPosition ? currentEndTime : ms
+        onUpdateTrackTimes(playlistId, id, newStartTime, newEndTime)
 
         // APIを呼び出してサーバー側も更新
         try {
@@ -207,15 +220,22 @@ export function PlaylistView({
             const updatedPlaylist = {
                 ...playlist,
                 tracks: playlist.tracks.map(t =>
-                    t.id === id ? { ...t, start_time: ms } : t
+                    t.id === id
+                        ? {
+                            ...t,
+                            ...(isStartPosition ? { start_time: ms } : { end_time: ms })
+                        }
+                        : t
                 )
             }
-
 
             await updateTracksSendApi(playlistId, updatedPlaylist)
 
             setNotificationType('success')
             setNotificationMessage('ループ位置を更新しました')
+            if (isStartPosition) {
+                setCurrentlyPlayingTrack(id)
+            }
         } catch (error) {
             setNotificationType('error')
             setNotificationMessage('ループ位置の保存に失敗しました')
@@ -223,52 +243,14 @@ export function PlaylistView({
 
         setShowNotification(true)
         setTimeout(() => setShowNotification(false), 3000)
-        setCurrentlyPlayingTrack(id)
     }
 
-    // 終了位置を設定
-    const setLoopEndPositionB = async (id: string, playlistId: string) => {
-        const state = await spotifyApi.getPlaybackState(token)
-        const ms: number = state?.progress_ms ?? 0
+    // 既存の関数を新しい関数を使用するように変更
+    const setLoopEndPositionA = (id: string, playlistId: string) =>
+        setLoopPosition(id, playlistId, true)
 
-        const currentTrack = playlists.flatMap(p => p.tracks).find(t => t.id === id)
-        const currentStartTime = currentTrack?.start_time ?? 0
-
-        if (currentStartTime && ms <= currentStartTime) {
-            setNotificationType('error')
-            setNotificationMessage('終了位置は開始位置より後に設定する必要があります')
-            setShowNotification(true)
-            setTimeout(() => setShowNotification(false), 3000)
-            return
-        }
-
-        // ローカルステートの更新
-        onUpdateTrackTimes(playlistId, id, currentStartTime, ms)
-
-        // APIを呼び出してサーバー側も更新
-        try {
-            const playlist = playlists.find(p => p.id === playlistId)
-            if (!playlist) return
-
-            const updatedPlaylist = {
-                ...playlist,
-                tracks: playlist.tracks.map(t => t.id === id ? { ...t, end_time: ms } : t)
-            }
-            console.log(updatedPlaylist)
-            await updateTracksSendApi(playlistId, updatedPlaylist)
-
-            setNotificationType('success')
-            setNotificationMessage('ループ位置を更新しました')
-            setShowNotification(true)
-            setTimeout(() => setShowNotification(false), 3000)
-        } catch (error) {
-            setNotificationType('error')
-            setNotificationMessage('ループ位置の保存に失敗しました')
-            setShowNotification(true)
-            setTimeout(() => setShowNotification(false), 3000)
-        }
-    }
-
+    const setLoopEndPositionB = (id: string, playlistId: string) =>
+        setLoopPosition(id, playlistId, false)
 
     const handleEditButton = (trackId: string) => {
         if (currentTrack === trackId) {
