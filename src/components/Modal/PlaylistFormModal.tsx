@@ -220,7 +220,7 @@ export function PlaylistFormModal({ isOpen, onClose, token, onSave, playlist, mo
                                     <HStack
                                         key={result.id}
                                         p={2}
-                                        _hover={{ bg: "gray.100" }}
+                                        _hover={{ bg: "gray.400" }}
                                         cursor="pointer"
                                         onClick={() => addTrackFromSearch(result)}
                                     >

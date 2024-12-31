@@ -614,6 +614,7 @@ export function PlaylistView({
                     }}
                     playlistId={selectedPlaylist?.id ?? ''}
                     onDeleteSuccess={handleDeleteSuccess}
+                    playlistName={selectedPlaylist?.name ?? ''}
                 />
             )}
             {showNotification && (
