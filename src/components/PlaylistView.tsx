@@ -157,7 +157,7 @@ export function PlaylistView({
                 await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time}ms`)
             }
-        }, 500)
+        }, 1000)
 
         return () => clearInterval(interval)
     }, [currentlyPlayingTrack, token, toggleSwitch, deviceName, playlists, isPlaylistMode, isShuffleMode, shuffledTracks])

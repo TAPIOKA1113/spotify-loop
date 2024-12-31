@@ -18,17 +18,42 @@ function App() {
     return localStorage.getItem('spotify_user_id') || '';
   });
 
-  useEffect(() => {
-    const fetchToken = async () => {
-      const accessToken = await refreshToken();
-      if (accessToken) {
-        // トークンをローカルストレージに保存
-        localStorage.setItem('spotify_token', accessToken);
-        setToken(accessToken);
-      }
+  // トークンの有効期限を保存する状態を追加
+  const [tokenExpiration, setTokenExpiration] = useState<number>(() => {
+    return Number(localStorage.getItem('token_expiration')) || 0;
+  });
+
+  // トークンを更新する関数
+  const updateToken = async () => {
+    const accessToken = await refreshToken();
+    if (accessToken) {
+      const expirationTime = Date.now() + 3600000; // 現在時刻 + 1時間
+      localStorage.setItem('spotify_token', accessToken);
+      localStorage.setItem('token_expiration', expirationTime.toString());
+      setToken(accessToken);
+      setTokenExpiration(expirationTime);
     }
-    fetchToken();
-  }, []);
+  };
+
+  // トークンの検証と更新のuseEffect
+  useEffect(() => {
+    const checkAndRefreshToken = async () => {
+      const now = Date.now();
+      // トークンが期限切れか期限切れ間近（5分以内）の場合に更新
+      if (tokenExpiration - now < 300000) {
+        await updateToken();
+      }
+    };
+
+    checkAndRefreshToken();
+
+    // 45分ごとにトークンを更新
+    const intervalId = setInterval(() => {
+      checkAndRefreshToken();
+    }, 2700000); // 45分 = 2700000ミリ秒
+
+    return () => clearInterval(intervalId);
+  }, [tokenExpiration]);
 
   useEffect(() => {
     setIsLoggedIn(!!token);
