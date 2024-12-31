@@ -72,6 +72,7 @@ export function PlaylistView({
 
     // useEffectを修正
     useEffect(() => {
+        if (!currentlyPlayingTrack) return;
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0 // 再生位置
@@ -81,6 +82,12 @@ export function PlaylistView({
             const activeDeviceId = devices.devices.find(device => device.is_active)?.id
             const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
             const device_id = spotifyLoopDevice?.id;
+
+            if (!state || !state.is_playing) {
+                setCurrentlyPlayingTrack('')
+                return
+            }
+
 
             // プレイリストモードまたはシャッフルモードの時のみ、次の曲への自動遷移を行う
             if (isPlaylistMode || isShuffleMode) {
