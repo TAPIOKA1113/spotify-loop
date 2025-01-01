@@ -421,7 +421,7 @@ export function PlaylistView({
     };
 
     return (
-        <VStack align="stretch" className="bg-gray-900 rounded-lg p-4">
+        <VStack align="stretch" className="bg-gray-900 rounded-lg p-4 w-full max-w-full overflow-x-hidden">
             <Accordion
                 isToggle
                 variant="card"
@@ -437,13 +437,13 @@ export function PlaylistView({
                             {playlist.name}
                         </AccordionLabel>
                         <AccordionPanel pt={3} bg={["gray.900", "gray.900"]}>
-                            <HStack justify="space-between" mt={1} mb={2}>
+                            <HStack justify="space-between" mt={1} mb={2} flexWrap="wrap" gap={2}>
                                 <HStack>
                                     <Tooltip label="はじめから再生">
                                         <IconButton
                                             aria-label="はじめから再生"
-                                            icon={<PlayCircle />}
-                                            size="sm"
+                                            icon={<PlayCircle className="w-4 h-4 md:w-5 md:h-5" />}
+                                            size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handlePlayFromBeginning(playlist)}
                                         />
@@ -451,8 +451,8 @@ export function PlaylistView({
                                     <Tooltip label="シャッフル再生">
                                         <IconButton
                                             aria-label="シャッフル再生"
-                                            icon={<Shuffle />}
-                                            size="sm"
+                                            icon={<Shuffle className="w-4 h-4 md:w-5 md:h-5" />}
+                                            size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handleShufflePlaylist(playlist)}
                                         />
@@ -462,8 +462,8 @@ export function PlaylistView({
                                     <Tooltip label="プレイリストを編集">
                                         <IconButton
                                             aria-label="プレイリストを編集"
-                                            icon={<Edit />}
-                                            size="sm"
+                                            icon={<Edit className="w-4 h-4 md:w-5 md:h-5" />}
+                                            size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handleOpenEditPlaylistModal(playlist)}
                                         />
@@ -471,8 +471,8 @@ export function PlaylistView({
                                     <Tooltip label="プレイリストを削除">
                                         <IconButton
                                             aria-label="プレイリストを削除"
-                                            icon={<Trash />}
-                                            size="sm"
+                                            icon={<Trash className="w-4 h-4 md:w-5 md:h-5" />}
+                                            size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handleDeletePlaylist(playlist.id)}
                                         />
@@ -512,9 +512,11 @@ export function PlaylistView({
                                                 transition-colors duration-200
                                             `}
                                         >
-                                            <HStack justify="space-between">
-                                                <HStack align="center" flex={1}>
-                                                    <Text fontSize="xs" className="text-gray-400 min-w-[24px]">{track.position + 1}</Text>
+                                            <HStack justify="space-between" flex={1}>
+                                                <HStack align="center" flex={1} minW="200px" maxW="calc(100% - 220px)">
+                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400 min-w-[24px]">
+                                                        {track.position + 1}
+                                                    </Text>
                                                     <Image
                                                         src={track.cover_url}
                                                         alt={track.name}
@@ -522,26 +524,27 @@ export function PlaylistView({
                                                         height={50}
                                                         className="rounded-md"
                                                     />
-                                                    <VStack align="start" gap={1} flex={1}>
+                                                    <VStack align="start" gap={1} flex={1} overflow="hidden">
                                                         <Text
                                                             fontWeight="semibold"
-                                                            className={`text-sm ${currentlyPlayingTrack === track.id
-                                                                ? "text-green-400"
-                                                                : ""
-                                                                }`}
+                                                            fontSize={["xs", "sm"]}
+                                                            className={`${currentlyPlayingTrack === track.id ? "text-green-400" : ""}`}
+
                                                         >
                                                             {track.name}
                                                         </Text>
-                                                        <Text fontSize="sm" className="text-gray-400" mt="-1">{track.artist}</Text>
+                                                        <Text fontSize={["xs", "sm"]} className="text-gray-400" mt="-1">
+                                                            {track.artist}
+                                                        </Text>
                                                     </VStack>
                                                 </HStack>
-                                                <HStack w="200px" justify="flex-end" >
-                                                    <Text fontSize="sm" className="text-gray-400 min-w-[150px] text-left">
+                                                <HStack minW="200px" justify="flex-end">
+                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400">
                                                         {formatTime(track.start_time)} - {formatTime(track.end_time)}
                                                     </Text>
                                                     <IconButton
                                                         aria-label={currentlyPlayingTrack === track.id ? "Pause" : "Play"}
-                                                        icon={currentlyPlayingTrack === track.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                                        icon={currentlyPlayingTrack === track.id ? <Pause className="w-3 h-3 md:w-4 md:h-4" /> : <Play className="w-3 h-3 md:w-4 md:h-4" />}
                                                         size="sm"
                                                         variant="unstyled"
                                                         onClick={(e) => {
@@ -552,7 +555,7 @@ export function PlaylistView({
                                                     />
                                                     <IconButton
                                                         aria-label="Edit"
-                                                        icon={<Edit className="w-4 h-4" />}
+                                                        icon={<Edit className="w-3 h-3 md:w-4 md:h-4" />}
                                                         size="sm"
                                                         variant="unstyled"
                                                         onClick={(e) => {
