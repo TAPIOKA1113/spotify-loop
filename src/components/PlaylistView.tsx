@@ -514,7 +514,7 @@ export function PlaylistView({
                                         >
                                             <HStack justify="space-between" flex={1}>
                                                 <HStack align="center" flex={1} minW="200px" maxW="calc(100% - 220px)">
-                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400 min-w-[24px]">
+                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400 min-w-[24px]" display={{ base: "block", md: "none" }}>
                                                         {track.position + 1}
                                                     </Text>
                                                     <Image
@@ -527,19 +527,38 @@ export function PlaylistView({
                                                     <VStack align="start" gap={1} flex={1} overflow="hidden">
                                                         <Text
                                                             fontWeight="semibold"
-                                                            fontSize={["xs", "sm"]}
-                                                            className={`${currentlyPlayingTrack === track.id ? "text-green-400" : ""}`}
-
+                                                            fontSize={{ base: "sm", md: "sm", lg: "xs", xl: "lg", "2xl": "lg" }}
+                                                            className={`
+                                                                ${currentlyPlayingTrack === track.id ? "text-green-400" : ""}
+                                                                ${currentlyPlayingTrack === track.id && track.name.length > 20 ? "marquee-text" : ""}
+                                                            `}
+                                                            overflow={{ base: "hidden", md: "hidden", lg: "visible", xl: "visible", "2xl": "visible" }}
+                                                            textOverflow={{ base: "ellipsis", md: "ellipsis", lg: "visible", xl: "visible", "2xl": "visible" }}
+                                                            whiteSpace={{ base: "nowrap", md: "nowrap", lg: "visible", xl: "visible", "2xl": "visible" }}
+                                                            position="relative"
                                                         >
                                                             {track.name}
                                                         </Text>
-                                                        <Text fontSize={["xs", "sm"]} className="text-gray-400" mt="-1">
+                                                        <Text
+                                                            fontSize={["xs", "sm"]}
+                                                            className={`
+                                                                text-gray-400 
+                                                                ${currentlyPlayingTrack === track.id && track.artist.length > 30 ? "marquee-text" : ""}
+                                                            `}
+                                                            mt="-1"
+                                                            overflow="hidden"
+                                                            whiteSpace="nowrap"
+                                                            position="relative"
+                                                        >
                                                             {track.artist}
+                                                        </Text>
+                                                        <Text fontSize={["xs", "sm"]} className="text-gray-400" mt="-1" display={{ base: "none", md: "block" }}>
+                                                            {formatTime(track.start_time)} - {formatTime(track.end_time)}
                                                         </Text>
                                                     </VStack>
                                                 </HStack>
-                                                <HStack minW="200px" justify="flex-end">
-                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400">
+                                                <HStack minW={{ base: "200px", md: "100px" }} justify="flex-end">
+                                                    <Text fontSize={["xs", "sm"]} className="text-gray-400" display={{ base: "block", md: "none" }}>
                                                         {formatTime(track.start_time)} - {formatTime(track.end_time)}
                                                     </Text>
                                                     <IconButton

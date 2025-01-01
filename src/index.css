@@ -2,3 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+.marquee-container {
+  overflow: hidden;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-text {
+  display: inline-block;
+  animation: marquee 8s linear infinite;
+  animation-play-state: paused;
+  width: max-content;
+}
+
+.marquee-text:hover {
+  animation-play-state: running;
+}
+
+@media (max-width: 768px) {
+  .marquee-text {
+    animation-play-state: running;
+  }
+}
