@@ -72,8 +72,9 @@ export function PlaylistView({
 
     // useEffectを修正
     useEffect(() => {
+        console.log(isFirstLoad)
         if (!currentlyPlayingTrack) return;
-        if (!toggleSwitch) return;
+        if (toggleSwitch) return;
         const interval = setInterval(async () => {
             const state = await spotifyApi.getPlaybackState(token)
             const ms: number = state?.progress_ms ?? 0 // 再生位置
@@ -161,7 +162,7 @@ export function PlaylistView({
                 return
             }
 
-            if (currentTrackId && toggleSwitch && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id) {
+            if (currentTrackId && currentlyPlayingTrack !== '' && ms > playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.end_time! && activeDeviceId === device_id) {
                 await spotifyApi.seek(token, playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time ?? 0)
                 console.log(`Bループを超えたため、Aに戻ります: ${playlists.flatMap(p => p.tracks).find(t => t.id === currentlyPlayingTrack)?.start_time}ms`)
             }
@@ -254,10 +255,10 @@ export function PlaylistView({
 
     const handleEditButton = (trackId: string) => {
         if (currentTrack === trackId) {
-            setToggleSwitch(true)
+            setToggleSwitch(false)
             setCurrentTrack('')
         } else {
-            setToggleSwitch(false)
+            setToggleSwitch(true)
             setCurrentTrack(trackId)
         }
     }
@@ -410,8 +411,9 @@ export function PlaylistView({
             const playButton = document.querySelector('.ButtonRSWP.rswp__toggle._ControlsButtonRSWP.__3hmsj') as HTMLButtonElement;
             if (playButton) {
                 playButton.click();
+                await new Promise(resolve => setTimeout(resolve, 500));
                 await spotifyApi.pause(token);
-                setIsFirstLoad(false);  // 処理完了後にフラグを更新
+                setIsFirstLoad(false);
             }
         } catch (error) {
             console.error('初期化中にエラーが発生しました:', error);
