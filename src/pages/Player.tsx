@@ -29,7 +29,16 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
     const [shuffle, setShuffle] = useState(false)
     const [repeat, setRepeat] = useState<'off' | 'context' | 'track'>('off')
     const [deviceName] = useState(() => `spotify-loop-${Math.random().toString(36).slice(2, 9)}`);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         const userId = localStorage.getItem('spotify_user_id');
@@ -123,8 +132,9 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                     <Box
                         className="fixed bottom-0 left-0 right-0 bg-black p-4"
                         zIndex={1000}
+                        height={isMobile ? "90px" : "110px"}
                     >
-                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} styles={{
+                        <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} hideCoverArt={isMobile} hideAttribution={isMobile} styles={{
                             color: "white",
                             sliderColor: "#1DB954",
                             sliderTrackColor: "gray",
