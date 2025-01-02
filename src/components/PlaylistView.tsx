@@ -442,23 +442,19 @@ export function PlaylistView({
                         <AccordionPanel pt={3} bg={["gray.900", "gray.900"]}>
                             <HStack justify="space-between" mt={1} mb={2} flexWrap="wrap" gap={2}>
                                 <HStack>
-                                    <Tooltip label="はじめから再生">
-                                        <IconButton
-                                            icon={<PlayCircle className="w-4 h-4 md:w-5 md:h-5" />}
-                                            size={["xs", "sm"]}
-                                            variant="unstyled"
-                                            onClick={() => handlePlayFromBeginning(playlist)}
-                                            color={isPlaylistMode ? "green.400" : ""} />
-                                    </Tooltip>
-                                    <Tooltip label="シャッフル再生">
-                                        <IconButton
-                                            icon={<Shuffle className="w-4 h-4 md:w-5 md:h-5" />}
-                                            size={["xs", "sm"]}
-                                            variant="unstyled"
-                                            onClick={() => handleShufflePlaylist(playlist)}
-                                            color={isShuffleMode ? "green.400" : ""}
-                                        />
-                                    </Tooltip>
+                                    <IconButton
+                                        icon={<PlayCircle className="w-4 h-4 md:w-5 md:h-5" />}
+                                        size={["xs", "sm"]}
+                                        variant="unstyled"
+                                        onClick={() => handlePlayFromBeginning(playlist)}
+                                        color={isPlaylistMode ? "green.400" : ""} />
+                                    <IconButton
+                                        icon={<Shuffle className="w-4 h-4 md:w-5 md:h-5" />}
+                                        size={["xs", "sm"]}
+                                        variant="unstyled"
+                                        onClick={() => handleShufflePlaylist(playlist)}
+                                        color={isShuffleMode ? "green.400" : ""}
+                                    />
                                 </HStack>
                                 <HStack>
                                     <Tooltip label="プレイリストを編集">
