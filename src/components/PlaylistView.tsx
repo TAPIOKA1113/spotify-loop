@@ -444,7 +444,6 @@ export function PlaylistView({
                                 <HStack>
                                     <Tooltip label="はじめから再生">
                                         <IconButton
-                                            aria-label="はじめから再生"
                                             icon={<PlayCircle className="w-4 h-4 md:w-5 md:h-5" />}
                                             size={["xs", "sm"]}
                                             variant="unstyled"
@@ -453,7 +452,6 @@ export function PlaylistView({
                                     </Tooltip>
                                     <Tooltip label="シャッフル再生">
                                         <IconButton
-                                            aria-label="シャッフル再生"
                                             icon={<Shuffle className="w-4 h-4 md:w-5 md:h-5" />}
                                             size={["xs", "sm"]}
                                             variant="unstyled"
