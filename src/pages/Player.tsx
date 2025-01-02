@@ -120,7 +120,10 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                         onDeleteSuccess={handleDeleteSuccess}
                     />
 
-                    <Box className="fixed bottom-0 left-0 right-0 bg-black p-4">
+                    <Box
+                        className="fixed bottom-0 left-0 right-0 bg-black p-4"
+                        zIndex={1000}
+                    >
                         <SpotifyPlayer token={token} uris={spotifyUrl ?? ''} name={deviceName} initialVolume={0.2} magnifySliderOnHover={true} styles={{
                             color: "white",
                             sliderColor: "#1DB954",
@@ -133,7 +136,7 @@ const Player: React.FC<PlayerProps> = ({ access_token }) => {
                             leftButton: (
                                 <ShuffleButton disabled={!isActive} shuffle={shuffle} token={token} />
                             ),
-                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />, 
+                            rightButton: <RepeatButton disabled={!isActive} repeat={repeat} token={token} />,
                         }} callback={state => {
                             setIsActive(state.isActive)
                             setShuffle(state.shuffle)

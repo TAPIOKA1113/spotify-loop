@@ -305,6 +305,7 @@ export function PlaylistView({
 
     const handlePlayFromBeginning = async (playlist: Playlist) => {
         setIsPlaylistMode(true)
+        setIsShuffleMode(false)
         const devices = await spotifyApi.getDevices(token);
         const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
         const device_id = spotifyLoopDevice?.id;
@@ -331,7 +332,7 @@ export function PlaylistView({
     }
 
     const handleShufflePlaylist = async (playlist: Playlist) => {
-        setIsPlaylistMode(true);
+        setIsPlaylistMode(false)
         setIsShuffleMode(true);
 
         // トラックをシャッフル
@@ -405,8 +406,9 @@ export function PlaylistView({
     }
 
     const handlePlaylistSelect = async () => {
-        if (!isFirstLoad) return;  // 初回以外は処理をスキップ
-
+        // モバイルデバイスのみ、初回のプレイリスト開閉時に再生ボタンを押す
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (!isFirstLoad || !isMobile) return;
         try {
             const playButton = document.querySelector('.ButtonRSWP.rswp__toggle._ControlsButtonRSWP.__3hmsj') as HTMLButtonElement;
             if (playButton) {
@@ -420,8 +422,9 @@ export function PlaylistView({
         }
     };
 
+
     return (
-        <VStack align="stretch" className="bg-gray-900 rounded-lg p-4 w-full max-w-full overflow-x-hidden">
+        <VStack align="stretch" className="bg-gray-900 rounded-lg p-4 w-full max-w-full overflow-x-hidden" mb="100px" >
             <Accordion
                 isToggle
                 variant="card"
@@ -446,7 +449,7 @@ export function PlaylistView({
                                             size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handlePlayFromBeginning(playlist)}
-                                        />
+                                            color={isPlaylistMode ? "green.400" : ""} />
                                     </Tooltip>
                                     <Tooltip label="シャッフル再生">
                                         <IconButton
@@ -455,6 +458,7 @@ export function PlaylistView({
                                             size={["xs", "sm"]}
                                             variant="unstyled"
                                             onClick={() => handleShufflePlaylist(playlist)}
+                                            color={isShuffleMode ? "green.400" : ""}
                                         />
                                     </Tooltip>
                                 </HStack>
