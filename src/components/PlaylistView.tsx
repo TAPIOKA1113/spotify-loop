@@ -59,6 +59,8 @@ export function PlaylistView({
 
     const [isFirstLoad, setIsFirstLoad] = useState(true);
 
+    const [currentPlaylistId, setCurrentPlaylistId] = useState<string>('');
+
     const updateTracksSendApi = async (playlistId: string, updatedPlaylist: Playlist) => {
         const userId = localStorage.getItem('spotify_user_id')
         const response = await apiClient.put(`/api/playlists/${userId}/${playlistId}`, {
@@ -263,10 +265,10 @@ export function PlaylistView({
         }
     }
     const handlePlayButton = async (uri: string, id: string) => {
-        // プレイリストモードとシャッフルモードをリセット
-        setIsPlaylistMode(false);
-        setIsShuffleMode(false);
-        setShuffledTracks([]); // シャッフルされたトラックもリセット
+        setIsPlaylistMode(false)
+        setIsShuffleMode(false)
+        setShuffledTracks([])
+        setCurrentPlaylistId('')
 
         try {
             const devices = await spotifyApi.getDevices(token);
@@ -306,6 +308,7 @@ export function PlaylistView({
     const handlePlayFromBeginning = async (playlist: Playlist) => {
         setIsPlaylistMode(true)
         setIsShuffleMode(false)
+        setCurrentPlaylistId(playlist.id)
         const devices = await spotifyApi.getDevices(token);
         const spotifyLoopDevice = devices.devices.find(device => device.name === deviceName);
         const device_id = spotifyLoopDevice?.id;
@@ -333,7 +336,8 @@ export function PlaylistView({
 
     const handleShufflePlaylist = async (playlist: Playlist) => {
         setIsPlaylistMode(false)
-        setIsShuffleMode(true);
+        setIsShuffleMode(true)
+        setCurrentPlaylistId(playlist.id)
 
         // トラックをシャッフル
         const shuffled = [...playlist.tracks].sort(() => Math.random() - 0.5);
@@ -447,13 +451,13 @@ export function PlaylistView({
                                         size={["xs", "sm"]}
                                         variant="unstyled"
                                         onClick={() => handlePlayFromBeginning(playlist)}
-                                        color={isPlaylistMode ? "green.400" : ""} />
+                                        color={isPlaylistMode && currentPlaylistId === playlist.id ? "green.400" : ""} />
                                     <IconButton
                                         icon={<Shuffle className="w-4 h-4 md:w-5 md:h-5" />}
                                         size={["xs", "sm"]}
                                         variant="unstyled"
                                         onClick={() => handleShufflePlaylist(playlist)}
-                                        color={isShuffleMode ? "green.400" : ""}
+                                        color={isShuffleMode && currentPlaylistId === playlist.id ? "green.400" : ""}
                                     />
                                 </HStack>
                                 <HStack>
